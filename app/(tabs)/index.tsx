@@ -1,26 +1,56 @@
-import { StyleSheet, SafeAreaView, View, TouchableOpacity, TextInput, FlatList, Image, RefreshControl } from 'react-native';
+import { StyleSheet, SafeAreaView, View, TouchableOpacity, Text, TextInput, FlatList, Image, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import ProductCard from '../ProductCard';
 import { products } from '../shared/mockProducts';
-
+import FilterComponent from '../filter';
 
 export default function Index() {
   const router = useRouter();
   const [inputTerm, setInputTerm] = useState('');
+  const [filteredProducts, setFilteredProducts] = useState(products);
   const [refreshing, setRefreshing] = useState(false);
+  const [showFilter, setShowFilter] = useState(false);
+  const [selectedSort, setSelectedSort] = useState('newest');
 
   const handleSearch = () => {
-    // Testing search functionality
-    console.log('Search term:', inputTerm);
+    const term = inputTerm.toLowerCase();
+    const filtered = products.filter(product =>
+      product.title.toLowerCase().includes(term)
+    );
+    setFilteredProducts(filtered);
+  };
+
+  const handleSort = (sortBy: string) => {
+    setSelectedSort(sortBy);
+    let sorted
+    switch (sortBy) {
+      case 'newest':
+        sorted = [...filteredProducts].sort(
+          (a, b) => new Date(b.createdDatetime).getTime() - new Date(a.createdDatetime).getTime());
+        break;
+        case 'oldest':
+          sorted = [...filteredProducts].sort(
+            (a, b) => new Date(a.createdDatetime).getTime() - new Date(b.createdDatetime).getTime());
+          break;
+      case 'lowToHigh':
+        sorted = [...filteredProducts].sort((a, b) => a.price - b.price);
+        break;
+      case 'highToLow':
+        sorted = [...filteredProducts].sort((a, b) => b.price - a.price);
+        break;
+      default:
+        sorted = [...filteredProducts];
+    }
+    setFilteredProducts(sorted);
   }
 
   const handleRefresh = () => {
-    // Testing refresh functionality
-    console.log('Refreshing...');
     setRefreshing(true);
     setTimeout(() => {
+      setInputTerm('');
+      setFilteredProducts(products);
       setRefreshing(false);
     }, 1000);
   };
@@ -28,6 +58,7 @@ export default function Index() {
   // redirects to Product Details view
   const handleProductClick = (item: any) => {
     router.push(`/product/${item.id}`)
+    setShowFilter(false)
   }
 
   return (
@@ -38,7 +69,7 @@ export default function Index() {
             <TouchableOpacity
               accessibilityLabel="search button"
               accessibilityRole="button"
-              onPress={() => {/* placeholder functionality */ }}
+              onPress={handleSearch}
             >
               <Ionicons name="search" size={24} color="black" style={{ marginRight: 8 }} />
             </TouchableOpacity>
@@ -57,7 +88,7 @@ export default function Index() {
             <TouchableOpacity
               accessibilityLabel="filter button"
               accessibilityRole="button"
-              onPress={() => {/* placeholder functionality */ }}
+              onPress={() => setShowFilter(true)}
             >
               <Ionicons name="filter" size={24} color="black" style={{ marginLeft: 8 }} />
             </TouchableOpacity>
@@ -65,9 +96,15 @@ export default function Index() {
         </View>
       </View>
 
+      {filteredProducts.length === 0 && (
+        <View>
+          <Text style={styles.fallbackText}>No matching items found.</Text>
+        </View>
+      )}
+
       <FlatList
         contentContainerStyle={styles.content}
-        data={products}
+        data={filteredProducts}
         keyExtractor={(item) => item.id.toString()}
         numColumns={2}
         refreshing={refreshing}
@@ -79,6 +116,17 @@ export default function Index() {
           />
         )}
       />
+
+      {showFilter && (
+        <View>
+          <FilterComponent
+            onClose={() => setShowFilter(false)}
+            onSelectSort={handleSort}
+            selectedSort={selectedSort}
+          />
+        </View>
+      )}
+
     </SafeAreaView>
   );
 }
@@ -107,5 +155,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     padding: 6,
     marginHorizontal: 8,
+  },
+  fallbackText: {
+    textAlign: 'center',
+    paddingTop: 10,
   }
 })
