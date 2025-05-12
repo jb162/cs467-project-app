@@ -1,26 +1,61 @@
-import { useLocalSearchParams, useNavigation } from 'expo-router';
-import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { useLayoutEffect } from 'react';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
+import {
+    View,
+    Text,
+    Image,
+    StyleSheet,
+    ScrollView,
+    TouchableOpacity,
+    Modal,
+    Dimensions,
+} from 'react-native';
+import { useLayoutEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { products } from '../shared/mockProducts';
 import { sellers } from '../shared/mockSellers';
 import fallbackImage from '../../assets/images/fallback.png';
 
+const screenWidth = Dimensions.get('window').width;
+
 export default function ProductDetail() {
+    const router = useRouter();
     const navigation = useNavigation();
     const { id } = useLocalSearchParams();
     const productId = parseInt(id as string, 10);
     const product = products.find((p) => p.id === productId);
+    const [fullscreen, setFullscreen] = useState(false);
+    const [imageIndex, setImageIndex] = useState(0);
 
     useLayoutEffect(() => {
         navigation.setOptions({
             title: '',
+            headerLeft: () => (
+                <TouchableOpacity
+                    onPress={() => router.push('/')}
+                    style={styles.backButton}
+                    accessibilityLabel="Go back to home"
+                    accessibilityRole="button"
+                    hitSlop={10}
+                >
+                    <Ionicons name="arrow-back" size={24} color="black" />
+                </TouchableOpacity>
+            ),
             headerRight: () => (
                 <View style={styles.header}>
-                    <TouchableOpacity onPress={handleShare} accessibilityLabel="Share product listing" accessibilityRole="button">
+                    <TouchableOpacity
+                        onPress={handleShare}
+                        accessibilityLabel="Share this listing"
+                        accessibilityRole="button"
+                        hitSlop={10}
+                    >
                         <Ionicons name="share-outline" size={24} color="black" />
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={handleFavorite} accessibilityLabel="Favorite product listing" accessibilityRole="button">
+                    <TouchableOpacity
+                        onPress={handleFavorite}
+                        accessibilityLabel="Favorite this listing"
+                        accessibilityRole="button"
+                        hitSlop={10}
+                    >
                         <Ionicons name="heart-outline" size={24} color="black" />
                     </TouchableOpacity>
                 </View>
@@ -28,7 +63,7 @@ export default function ProductDetail() {
         });
     }, [navigation]);
 
-    if (!product) {
+    if (!product || !product.images || product.images.length === 0) {
         return (
             <View style={styles.center}>
                 <Text>Product not found.</Text>
@@ -46,10 +81,65 @@ export default function ProductDetail() {
         console.log('handleFavorite() called');
     };
 
+    const goPrev = () => {
+        setImageIndex((prev) => (prev - 1 + product.images.length) % product.images.length);
+    };
+
+    const goNext = () => {
+        setImageIndex((prev) => (prev + 1) % product.images.length);
+    };
+
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
-            <Image source={{ uri: product.image }} style={styles.image} defaultSource={fallbackImage} accessibilityLabel={`Image of ${product.title}`} />
+            <View style={styles.carouselWrapper} accessible>
+                {product.images.length > 1 && (
+                    <TouchableOpacity
+                        onPress={goPrev}
+                        style={styles.carouselArrowLeft}
+                        accessibilityLabel="Previous image"
+                        accessibilityRole="button"
+                        hitSlop={10}
+                    >
+                        <Ionicons name="chevron-back" size={28} color="#333" />
+                    </TouchableOpacity>
+                )}
+                <TouchableOpacity
+                    onPress={() => setFullscreen(true)}
+                    accessibilityLabel="View fullscreen image"
+                    accessibilityRole="button"
+                >
+                    <Image
+                        source={{ uri: product.images[imageIndex] }}
+                        style={styles.image}
+                        defaultSource={fallbackImage}
+                        accessibilityLabel={`Image ${imageIndex + 1} of ${product.title}`}
+                    />
+                </TouchableOpacity>
+                {product.images.length > 1 && (
+                    <TouchableOpacity
+                        onPress={goNext}
+                        style={styles.carouselArrowRight}
+                        accessibilityLabel="Next image"
+                        accessibilityRole="button"
+                        hitSlop={10}
+                    >
+                        <Ionicons name="chevron-forward" size={28} color="#333" />
+                    </TouchableOpacity>
+                )}
+            </View>
+
+            {product.images.length > 1 && (
+                <View style={styles.dotsContainer} accessible accessibilityLabel="Image carousel dots">
+                    {product.images.map((_, i) => (
+                        <View
+                            key={i}
+                            style={[styles.dot, i === imageIndex && styles.activeDot]}
+                        />
+                    ))}
+                </View>
+            )}
+
             <Text style={styles.title}>{product.title}</Text>
             <Text style={styles.price}>${product.price.toFixed(2)}</Text>
 
@@ -72,31 +162,94 @@ export default function ProductDetail() {
 
             <Text style={styles.label}>Seller Info</Text>
             {seller ? (
-                <View style={styles.sellerInfoRow}>
-                    <Image source={{ uri: seller.image }} style={styles.sellerImage} defaultSource={fallbackImage} accessibilityLabel={`Image of ${seller.name}`} />
+                <View style={styles.sellerInfoRow} accessible>
+                    <Image
+                        source={{ uri: seller.image }}
+                        style={styles.sellerImage}
+                        defaultSource={fallbackImage}
+                        accessibilityLabel={`Photo of seller ${seller.name}`}
+                    />
                     <View style={styles.sellerDetailsContainer}>
                         <Text style={styles.sellerName}>{seller.name}</Text>
                         <Text style={styles.sellerMeta}>
-                            Joined: {new Date(seller.createdDatetime).toLocaleString('default', { month: 'short', year: 'numeric' })} | Rating: {seller.rating?.toFixed(1) || 'N/A'}
+                            Joined:{" "}
+                            {new Date(seller.createdDatetime).toLocaleString("default", {
+                                month: "short",
+                                year: "numeric",
+                            })}{" "}
+                            | Rating: {seller.rating?.toFixed(1) || "N/A"}
                         </Text>
                         <Text style={styles.sellerMeta}>{seller.location}</Text>
                     </View>
-                    <TouchableOpacity onPress={() => console.log('handleSellerInfo() called')} accessibilityLabel="View seller info" accessibilityRole="button">
-                        <Ionicons name="information-circle-outline" size={24} color="#555" style={{ marginLeft: 8 }} />
+                    <TouchableOpacity
+                        onPress={() => console.log("handleSellerInfo() called")}
+                        accessibilityLabel="View seller information"
+                        accessibilityRole="button"
+                        style={styles.infoButton}
+                        hitSlop={10}
+                    >
+                        <Ionicons name="information-circle-outline" size={24} color="#555" />
                     </TouchableOpacity>
                 </View>
             ) : (
                 <Text style={styles.text}>Seller not found.</Text>
             )}
+
+            <Modal visible={fullscreen} transparent={true}>
+                <View style={styles.fullscreenContainer}>
+                    <TouchableOpacity
+                        onPress={() => setFullscreen(false)}
+                        style={styles.closeButton}
+                        accessibilityLabel="Close fullscreen"
+                        accessibilityRole="button"
+                        hitSlop={10}
+                    >
+                        <Ionicons name="close" size={32} color="#fff" />
+                    </TouchableOpacity>
+
+                    {product.images.length > 1 && (
+                        <>
+                            <TouchableOpacity
+                                onPress={goPrev}
+                                style={styles.leftArrow}
+                                accessibilityLabel="Previous image"
+                                accessibilityRole="button"
+                                hitSlop={10}
+                            >
+                                <Ionicons name="chevron-back" size={32} color="#fff" />
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={goNext}
+                                style={styles.rightArrow}
+                                accessibilityLabel="Next image"
+                                accessibilityRole="button"
+                                hitSlop={10}
+                            >
+                                <Ionicons name="chevron-forward" size={32} color="#fff" />
+                            </TouchableOpacity>
+                        </>
+                    )}
+
+                    <Image
+                        source={{ uri: product.images[imageIndex] }}
+                        style={styles.fullscreenImage}
+                        resizeMode="contain"
+                        accessibilityLabel={`Fullscreen image ${imageIndex + 1} of ${product.title}`}
+                    />
+                </View>
+            </Modal>
         </ScrollView>
     );
 }
 
 const styles = StyleSheet.create({
+    backButton: {
+        marginLeft: 12,
+    },
     header: {
         flexDirection: 'row',
         gap: 16,
-        marginRight: 12
+        marginRight: 12,
     },
     container: {
         padding: 20,
@@ -106,11 +259,85 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-    image: {
-        width: '100%',
-        height: 280,
-        borderRadius: 10,
+    carouselWrapper: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative',
+        marginBottom: 10,
+    },
+    carouselArrowLeft: {
+        position: 'absolute',
+        left: 10,
+        zIndex: 1,
+        padding: 6,
+        backgroundColor: 'rgba(255,255,255,0.8)',
+        borderRadius: 20,
+    },
+    carouselArrowRight: {
+        position: 'absolute',
+        right: 10,
+        zIndex: 1,
+        padding: 6,
+        backgroundColor: 'rgba(255,255,255,0.8)',
+        borderRadius: 20,
+    },
+    dotsContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
         marginBottom: 12,
+    },
+    dot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: '#ccc',
+        marginHorizontal: 4,
+    },
+    activeDot: {
+        backgroundColor: '#1e88e5',
+    },
+    image: {
+        width: screenWidth * 0.85,
+        height: 260,
+        borderRadius: 10,
+    },
+    fullscreenContainer: {
+        flex: 1,
+        backgroundColor: 'black',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    fullscreenImage: {
+        width: '100%',
+        height: '100%',
+    },
+    closeButton: {
+        position: 'absolute',
+        top: 40,
+        right: 20,
+        zIndex: 10,
+    },
+    leftArrow: {
+        position: 'absolute',
+        left: 20,
+        top: '50%',
+        transform: [{ translateY: -16 }],
+        padding: 10,
+        zIndex: 10,
+        backgroundColor: 'rgba(0,0,0,0.4)',
+        borderRadius: 24,
+    },
+    rightArrow: {
+        position: 'absolute',
+        right: 20,
+        top: '50%',
+        transform: [{ translateY: -16 }],
+        padding: 10,
+        zIndex: 10,
+        backgroundColor: 'rgba(0,0,0,0.4)',
+        borderRadius: 24,
     },
     title: {
         fontSize: 24,
@@ -164,24 +391,6 @@ const styles = StyleSheet.create({
         flex: 1,
         marginLeft: 12,
     },
-    sellerCard: {
-        padding: 12,
-        backgroundColor: '#f2f2f2',
-        borderRadius: 8,
-        marginTop: 8,
-    },
-    sellerDetails: {
-        fontSize: 15,
-        color: '#555',
-    },
-    sellerInfoContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginTop: 8,
-        backgroundColor: '#f9f9f9',
-        padding: 12,
-        borderRadius: 8,
-    },
     sellerName: {
         fontSize: 16,
         fontWeight: '600',
@@ -192,5 +401,7 @@ const styles = StyleSheet.create({
         color: '#555',
         marginBottom: 2,
     },
-
+    infoButton: {
+        marginLeft: 8,
+    },
 });
