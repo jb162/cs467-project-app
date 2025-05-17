@@ -65,10 +65,12 @@ export default function AccountScreen() {
           <View style={styles.accountRow}>
             <Text style={styles.accountLabel}>Password</Text>
             <View style={styles.accountValueGroup}>
-              <TouchableOpacity onPress={handleShowPass}>
-                <Text style={styles.accountValue}>
+              <Text style={styles.accountValue}>
                 {showPassword ? seller.passwordHash : maskedPassword}
-                </Text>
+              </Text>
+
+              <TouchableOpacity onPress={handleShowPass}>
+                <Ionicons name={showPassword ? "eye" : "eye-off"} size={16} color="black"/>
               </TouchableOpacity>
 
               <TouchableOpacity onPress={() => router.push(`/edit?field=password&value=${encodeURIComponent(seller.passwordHash)}`)}>
@@ -144,7 +146,7 @@ const styles = StyleSheet.create({
   },
   accountValueGroup: {
     flexDirection: 'row',
-    gap: 5,
+    gap: 10,
   },
   accountValue: {
     fontSize: 16,
