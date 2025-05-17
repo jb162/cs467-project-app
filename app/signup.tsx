@@ -11,10 +11,7 @@ export default function SignUp() {
     confirmPassword: '',
   });
 
-  const handleNameChange = (name: string) => setForm((prev) => ({...prev, name }));
-  const handleEmailChange = (email: string) => setForm((prev) => ({...prev, email }));
-  const handlePasswordChange = (password: string) => setForm((prev) => ({...prev, password }));
-  const handleConfirmPasswordChange = (confirmPassword: string) => setForm((prev) => ({...prev, confirmPassword }));
+  const updateField = (key: string, value: string) => setForm(prev => ({ ...prev, [key]: value }));
 
   const handleSignUp = () => {
     /* Placeholder functionality */
@@ -48,11 +45,13 @@ export default function SignUp() {
             <TextInput
               accessibilityLabel="First and Last Name"
               accessibilityRole="text"
+              autoCompleteType="name"
+              textContentType="name"
               style={styles.inputControl}
               value={form.name}
               placeholder="John Doe"
               clearButtonMode="while-editing"
-              onChangeText={handleNameChange}
+              onChangeText={(text) => updateField("name", text)}
             />
           </View>
 
@@ -61,11 +60,14 @@ export default function SignUp() {
             <TextInput
               accessibilityLabel="Email address"
               accessibilityRole="text"
+              autoCompleteType="email"
+              autoCapitalize="none"
+              keyboardType="email-address"
               style={styles.inputControl}
               placeholder="email@example.com"
               value={form.email}
               clearButtonMode="while-editing"
-              onChangeText={handleEmailChange}
+              onChangeText={(text) => updateField("email", text)}
             />
           </View>
 
@@ -74,12 +76,15 @@ export default function SignUp() {
             <TextInput
               accessibilityLabel="Password"
               accessibilityRole="text"
+              autoCompleteType="password"
+              autoCapitalize="none"
+              textContentType="password"
               style={styles.inputControl}
               value={form.password}
               placeholder="*********"
               secureTextEntry
               clearButtonMode="while-editing"
-              onChangeText={handlePasswordChange}
+              onChangeText={(text) => updateField("password", text)}
             />
           </View>
 
@@ -88,12 +93,15 @@ export default function SignUp() {
             <TextInput
               accessibilityLabel="Confirm Password"
               accessibilityRole="text"
+              autoCompleteType="password"
+              autoCapitalize="none"
+              textContentType="newPassword"
               style={styles.inputControl}
               value={form.confirmPassword}
               placeholder="*********"
               secureTextEntry
               clearButtonMode="while-editing"
-              onChangeText={handleConfirmPasswordChange}
+              onChangeText={(text) => updateField("confirmPassword", text)}
             />
           </View>
 
