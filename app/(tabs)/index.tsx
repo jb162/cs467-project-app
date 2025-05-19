@@ -5,6 +5,7 @@ import { useState } from 'react';
 import ProductCard from '../ProductCard';
 import { products } from '../shared/mockProducts';
 import FilterComponent from '../filter';
+import { COLORS } from '../shared/colors';
 
 export default function Index() {
   const router = useRouter();
@@ -14,43 +15,54 @@ export default function Index() {
   const [showFilter, setShowFilter] = useState(false);
   const [selectedSort, setSelectedSort] = useState('newest');
 
-  const handleSearch = () => {
-    const term = inputTerm.toLowerCase();
-    const filtered = products.filter(product =>
+  const updateProductList = (searchTerm: string, sortBy: string) => {
+    const term = searchTerm.toLowerCase();
+
+    let updated = products.filter(product =>
       product.title.toLowerCase().includes(term)
     );
-    setFilteredProducts(filtered);
+
+    switch (sortBy) {
+      case 'newest':
+      updated =  updated.sort(
+          (a, b) =>
+            new Date(b.createdDatetime).getTime() -
+            new Date(a.createdDatetime).getTime()
+        );
+        break;
+      case 'oldest':
+          updated = updated.sort(
+            (a, b) =>
+              new Date(a.createdDatetime).getTime() -
+              new Date(b.createdDatetime).getTime()
+        );
+        break;
+      case 'lowToHigh':
+        updated = updated.sort((a, b) => a.price - b.price);
+        break;
+      case 'highToLow':
+        updated = updated.sort((a, b) => b.price - a.price);
+        break;
+    }
+
+    setFilteredProducts(updated);
+  };
+
+  const handleSearch = () => {
+    updateProductList(inputTerm, selectedSort);
   };
 
   const handleSort = (sortBy: string) => {
     setSelectedSort(sortBy);
-    let sorted
-    switch (sortBy) {
-      case 'newest':
-        sorted = [...filteredProducts].sort(
-          (a, b) => new Date(b.createdDatetime).getTime() - new Date(a.createdDatetime).getTime());
-        break;
-        case 'oldest':
-          sorted = [...filteredProducts].sort(
-            (a, b) => new Date(a.createdDatetime).getTime() - new Date(b.createdDatetime).getTime());
-          break;
-      case 'lowToHigh':
-        sorted = [...filteredProducts].sort((a, b) => a.price - b.price);
-        break;
-      case 'highToLow':
-        sorted = [...filteredProducts].sort((a, b) => b.price - a.price);
-        break;
-      default:
-        sorted = [...filteredProducts];
-    }
-    setFilteredProducts(sorted);
+    updateProductList(inputTerm, sortBy);
   }
 
   const handleRefresh = () => {
     setRefreshing(true);
     setTimeout(() => {
       setInputTerm('');
-      setFilteredProducts(products);
+      setSelectedSort('newest')
+      updateProductList('', 'newest')
       setRefreshing(false);
     }, 1000);
   };
@@ -62,7 +74,7 @@ export default function Index() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f2f2f2' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }}>
       <View style={styles.header}>
         <View style={styles.searchContainer}>
           <View style={styles.search}>
@@ -77,9 +89,12 @@ export default function Index() {
             <TextInput
               style={styles.input}
               placeholder="Search for sale"
-              placeholderTextColor="#888"
+              placeholderTextColor={COLORS.textGray}
               value={inputTerm}
-              onChangeText={setInputTerm}
+              onChangeText={(text) => {
+                setInputTerm(text);
+                updateProductList(text, selectedSort);
+              }}
               onSubmitEditing={handleSearch}
               returnKeyType="search"
               autoCapitalize="none"
@@ -146,7 +161,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'white',
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: COLORS.border,
     paddingHorizontal: 10,
     paddingVertical: 8,
   },

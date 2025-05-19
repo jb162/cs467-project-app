@@ -1,6 +1,7 @@
 import { StyleSheet, View, TouchableOpacity, Text } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useEffect, useState } from 'react';
+import { COLORS } from './shared/colors';
 
 export default function FilterComponent({ onClose, onSelectSort, selectedSort }) {
     const [selectedOption, setSelectedOption] = useState(selectedSort || null);
@@ -28,7 +29,7 @@ export default function FilterComponent({ onClose, onSelectSort, selectedSort })
             <TouchableOpacity
                 onPress={onClose}
                 style={styles.filterClose}>
-            <Ionicons color="#1d1d1d" name="close" size={24} />
+            <Ionicons color={COLORS.backgroundBlack} name="close" size={24} />
             </TouchableOpacity>
             <View style={styles.filterHeader}>
                 <Text style={styles.filterTitle}>Sort By</Text>
@@ -49,7 +50,7 @@ export default function FilterComponent({ onClose, onSelectSort, selectedSort })
                             ]}
                         >
                             <Ionicons
-                                color="#fff"
+                                color={COLORS.white}
                                 name="checkmark"
                                 style={selectedOption !== option.value && { display: 'none' }}
                                 size={12}
@@ -92,7 +93,7 @@ const styles = StyleSheet.create({
     filterTitle: {
         fontSize: 32,
         fontWeight: '700',
-        color: '#1d1d1d',
+        color: COLORS.text,
     },
     radio: {
         flexGrow: 1,
@@ -101,7 +102,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        height: 54,
+        height: 40,
         paddingRight: 24,
       },
       radioWrapper: {
@@ -111,12 +112,12 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'flex-start',
         borderTopWidth: 1,
-        borderColor: '#e8e8e8',
+        borderColor: COLORS.borderGray,
       },
       radioLabel: {
         fontSize: 17,
         fontWeight: '600',
-        color: '#222222',
+        color: COLORS.text,
         marginBottom: 2,
       },
       radioCheck: {
@@ -127,11 +128,11 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         marginLeft: 'auto',
         borderWidth: 1,
-        borderColor: '#999B9A',
+        borderColor: COLORS.border,
       },
       radioCheckActive: {
-        borderColor: '#ad5ff5',
-        backgroundColor: '#ad5ff5',
+        borderColor: COLORS.purple,
+        backgroundColor: COLORS.purple,
       },
       filterActions: {
         flexDirection: 'row',
@@ -140,13 +141,13 @@ const styles = StyleSheet.create({
         padding: 10,
       },
       btn: {
-        backgroundColor: '#ad5ff5',
+        backgroundColor: COLORS.purple,
         paddingVertical: 10,
         paddingHorizontal: 20,
         borderRadius: 50,
       },
       btnTxt: {
         fontSize: 16,
-        color: '#fff',
+        color: COLORS.white,
       }
 })
