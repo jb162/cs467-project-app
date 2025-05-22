@@ -8,12 +8,18 @@ import {
     TouchableOpacity,
     Modal,
     Dimensions,
+    Platform
 } from 'react-native';
+import Toast from 'react-native-toast-message';
 import { useLayoutEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import * as Clipboard from 'expo-clipboard';
+import * as Linking from 'expo-linking';
 import { products } from '../shared/mockProducts';
 import { sellers } from '../shared/mockSellers';
 import fallbackImage from '../../assets/images/fallback.png';
+import { getUser, updateFavoriteListings } from '@/shared/api/users';
+
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -48,7 +54,7 @@ export default function ProductDetail() {
                         accessibilityRole="button"
                         hitSlop={10}
                     >
-                        <Ionicons name="share-outline" size={24} color="black" />
+                        <Ionicons name="copy-outline" size={24} color="black" />
                     </TouchableOpacity>
                     <TouchableOpacity
                         onPress={handleFavorite}
@@ -72,13 +78,48 @@ export default function ProductDetail() {
     }
     const seller = sellers.find((s) => s.username === product.seller);
 
+    const handleShare = async () => {
+        try {
+            const url = Linking.createURL(`/products/${productId}`);
+            await Clipboard.setStringAsync(url);
 
-    const handleShare = () => {
-        console.log('handleShare() called');
+            Toast.show({
+                type: 'success',
+                text1: 'Link copied!',
+                text2: 'Paste it anywhere to share.',
+            });
+        } catch (error) {
+            console.error('Clipboard error:', error);
+            Toast.show({
+                type: 'error',
+                text1: 'Failed to copy link',
+            });
+        }
     };
 
-    const handleFavorite = () => {
-        console.log('handleFavorite() called');
+
+    const handleFavorite = async () => {
+        try {
+            const username = 'justin'; // Replace with actual logged-in user
+
+            const user = await getUser(username);
+            const favorites = user.favorite_listings || [];
+
+            const alreadyFavorited = favorites.includes(productId.toString());
+            const updatedFavorites = alreadyFavorited
+                ? favorites.filter((id: string) => id !== productId.toString())
+                : [...favorites, productId.toString()];
+
+            await updateFavoriteListings(username, updatedFavorites);
+
+            Toast.show({
+                type: 'success',
+                text1: alreadyFavorited ? 'Removed from favorites' : 'Added to favorites',
+            });
+        } catch (err) {
+            Toast.show({ type: 'error', text1: 'Could not update favorites' });
+            console.error(err);
+        }
     };
 
     const goPrev = () => {
