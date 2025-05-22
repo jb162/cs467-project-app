@@ -21,14 +21,14 @@ export interface ProductListing {
 
 export interface User {
   username: string;
-  email: string | null;
+  email: string;
   passwordHash: string;
   createdDatetime: string;
   updatedDatetime: string;
 
   // new attributes
   image: string;
-  name?: string;
+  name: string;
   rating?: number;
   location?: string;
 }

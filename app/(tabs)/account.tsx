@@ -1,4 +1,4 @@
-import { FlatList, Image, ScrollView, StyleSheet, Text, Touchable, TouchableOpacity, View } from 'react-native';
+import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { sellers } from '../shared/mockSellers';
 import fallbackImage from '../../assets/images/fallback.png';
 import { products } from '../shared/mockProducts';
@@ -6,13 +6,14 @@ import ProductCard from '../ProductCard';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import { useEditAccount } from '../shared/EditAccountContext';
 
-// Placeholder testing functionality for mock seller
+// Placeholder testing functionality
 const seller = sellers[0];
 
 export default function AccountScreen() {
     const router = useRouter();
-
+    const { setFieldValue } = useEditAccount();
     const [showPassword, setShowPassword] = useState(false);
 
     const maskedPassword = '•'.repeat(8);
@@ -25,6 +26,13 @@ export default function AccountScreen() {
     const handleProductClick = (item: any) => {
         router.push(`/product/${item.id}`)
     };
+
+    const handleLogout = () => {
+      console.log("handleLogout() called")
+    }
+
+    const sellerListingCount = products.filter(
+      product => product.seller === seller.username).length;
 
     return (
       <View style={styles.container}>
@@ -45,9 +53,12 @@ export default function AccountScreen() {
             <Text style={styles.accountLabel}>Name</Text>
             <View style={styles.accountValueGroup}>
               <Text style={styles.accountValue}>{seller.name}</Text>
-              <TouchableOpacity onPress={() => router.push(`/edit?field=name&value=${encodeURIComponent(seller.name)}`)}>
-              <Ionicons name="chevron-forward" size={16} color="black"/>
-            </TouchableOpacity>
+              <TouchableOpacity onPress={() => {
+                setFieldValue('name', seller.name);
+                router.push('/editAccount');
+              }}>
+                <Ionicons name="chevron-forward" size={16} color="black"/>
+              </TouchableOpacity>
             </View>
 
           </View>
@@ -55,7 +66,10 @@ export default function AccountScreen() {
             <Text style={styles.accountLabel}>Email Address</Text>
             <View style={styles.accountValueGroup}>
               <Text style={styles.accountValue}>{seller.email}</Text>
-              <TouchableOpacity onPress={() => router.push(`/edit?field=email&value=${encodeURIComponent(seller.email)}`)}>
+              <TouchableOpacity onPress={() => {
+                setFieldValue('email', seller.email);
+                router.push('/editAccount');
+              }}>
                 <Ionicons name="chevron-forward" size={16} color="black"/>
               </TouchableOpacity>
             </View>
@@ -73,19 +87,21 @@ export default function AccountScreen() {
                 <Ionicons name={showPassword ? "eye" : "eye-off"} size={16} color="black"/>
               </TouchableOpacity>
 
-              <TouchableOpacity onPress={() => router.push(`/edit?field=password&value=${encodeURIComponent(seller.passwordHash)}`)}>
+              <TouchableOpacity onPress={() => {
+                setFieldValue('password', seller.passwordHash);
+                router.push('/editAccount')
+              }}>
                 <Ionicons name="chevron-forward" size={16} color="black"/>
               </TouchableOpacity>
             </View>
-
           </View>
         </View>
 
         <View style={styles.listingsSummary}>
-          <Text style={styles.listingsTitle}>My Listings</Text>
+          <Text style={styles.listingsTitle}>My Listings ({sellerListingCount})</Text>
 
           <FlatList
-            data={products}
+            data={products.filter(product => product.seller === seller.username)}
             keyExtractor={(item) => item.id.toString()}
             numColumns={2}
             renderItem={({ item }) => (
@@ -98,6 +114,12 @@ export default function AccountScreen() {
             showsVerticalScrollIndicator={false}
           />
         </View>
+
+        <View style={styles.logoutContainer}>
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+            <Text style={styles.logoutText}>Log Out</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
 }
@@ -109,12 +131,12 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 3,
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: '600',
-    marginBottom: 12,
+    marginBottom: 3,
   },
   image: {
     width: 80,
@@ -122,7 +144,7 @@ const styles = StyleSheet.create({
     borderRadius: 9999,
   },
   accountSummary: {
-    marginTop: 12,
+    marginTop: 6,
     padding: 16,
     backgroundColor: '#fff',
     borderRadius: 12,
@@ -134,12 +156,12 @@ const styles = StyleSheet.create({
   accountTitle: {
     fontSize: 18,
     fontWeight: '600',
-    marginBottom: 16,
+    marginBottom: 8,
   },
   accountRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    height: 44,
+    height: 36,
   },
   accountLabel: {
     fontSize: 16,
@@ -164,11 +186,21 @@ const styles = StyleSheet.create({
     shadowRadius: 1.41,
   },
   listingsContainer: {
-    paddingBottom: 24,
+    paddingBottom: 12,
   },
   listingsTitle: {
     fontSize: 18,
     fontWeight: '600',
-    marginBottom: 16,
+    marginBottom: 8,
   },
+  logoutContainer: {
+    marginTop: 6,
+    alignItems: 'center',
+  },
+  logoutButton: {
+    backgroundColor: '',
+  },
+  logoutText: {
+    color: 'darkred',
+  }
 })

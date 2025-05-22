@@ -170,4 +170,21 @@ export const products: ProductListing[] = [
     image:
       "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTo9AUql84MSPVXggXT_jDp0aEObY2RUEOYXQ&s",
   },
+  {
+    id: 11,
+    activeStatus: "active",
+    title: "Power Drill",
+    description: "Dewalt 20V cordless drill with charger and two batteries.",
+    seller: "justin123",
+    price: 65.0,
+    createdDatetime: "2025-04-25T10:30:00Z",
+    updatedDatetime: "2025-04-25T12:15:00Z",
+    expirationDatetime: null,
+    category: "Tools & Home Improvement",
+    condition: "Like New",
+    location: "Austin, TX",
+    isSold: false,
+    image:
+      "https://images.unsplash.com/photo-1632095710940-ad578e8cbe6b?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  },
 ];

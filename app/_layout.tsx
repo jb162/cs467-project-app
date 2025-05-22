@@ -1,17 +1,16 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { AuthProvider } from '../app/contexts/AuthContext'
+import { EditAccountProvider } from './shared/EditAccountContext';
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
+    <EditAccountProvider>
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
         <StatusBar style="light" />
-        <Stack.Screen name="edit" options={{ title: "" }} />
-        <Stack.Screen name="login" options={{ headerShown: false }} />
+        <Stack.Screen name="editAccount" options={{ title: "" }} />
       </Stack>
-    </AuthProvider>
+    </EditAccountProvider>
   );
 }
