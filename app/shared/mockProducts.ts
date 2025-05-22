@@ -15,8 +15,12 @@ export const products: ProductListing[] = [
     condition: "Good",
     location: "Seattle, WA",
     isSold: false,
-    image:
+    images: [
       "https://images.unsplash.com/photo-1714070700737-24acfe6b957c?q=80&w=2960&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "https://originalfavorites.com/cdn/shop/files/White_T-Shirt_Detail_On_Model_Shopify_Final.jpg?v=1732569627&width=3000",
+      "https://elevennewyork.com/wp-content/uploads/2020/09/01_white-tee_front-scaled.jpg",
+      "https://www.trueclassictees.com/cdn/shop/files/4000_WHITE_21_c8d0b6b7-5fa4-41c0-8ccd-1d48eab5fdb4.jpg?v=1741885991",
+    ],
   },
   {
     id: 2,
@@ -32,8 +36,9 @@ export const products: ProductListing[] = [
     condition: "Like New",
     location: "Portland, OR",
     isSold: false,
-    image:
+    images: [
       "https://images.unsplash.com/photo-1704919266475-aa6302e25209?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    ],
   },
   {
     id: 3,
@@ -49,8 +54,9 @@ export const products: ProductListing[] = [
     condition: "Good",
     location: "San Francisco, CA",
     isSold: false,
-    image:
+    images: [
       "https://plus.unsplash.com/premium_photo-1681160405609-389cd83998d0?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OXx8bWFjJTIwYm9va3xlbnwwfHwwfHx8MA%3D%3D",
+    ],
   },
   {
     id: 4,
@@ -66,7 +72,7 @@ export const products: ProductListing[] = [
     condition: "Like New",
     location: "Seattle, WA",
     isSold: false,
-    image: "https://m.media-amazon.com/images/I/81AQ4oN9bNL.jpg",
+    images: ["https://m.media-amazon.com/images/I/81AQ4oN9bNL.jpg"],
   },
   {
     id: 5,
@@ -82,8 +88,9 @@ export const products: ProductListing[] = [
     condition: "Good",
     location: "Tacoma, WA",
     isSold: false,
-    image:
+    images: [
       "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTL066cQktmc_NrzppNM27t0Pmuojnd3PFFdQ&s",
+    ],
   },
   {
     id: 6,
@@ -99,8 +106,9 @@ export const products: ProductListing[] = [
     condition: "Like New",
     location: "Bellevue, WA",
     isSold: false,
-    image:
+    images: [
       "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTSoRm0reh5wvNktygd7gzHLFrJiowNkw_HxQ&s",
+    ],
   },
   {
     id: 7,
@@ -116,8 +124,9 @@ export const products: ProductListing[] = [
     condition: "Good",
     location: "Redmond, WA",
     isSold: false,
-    image:
+    images: [
       "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSsQX2A6cro0dvR2YDWRtCV8Stcv5VAwfrYZA&s",
+    ],
   },
   {
     id: 8,
@@ -133,8 +142,9 @@ export const products: ProductListing[] = [
     condition: "Like New",
     location: "Kirkland, WA",
     isSold: false,
-    image:
+    images: [
       "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQDwK7g4qXoqDiUqA-LfBHv_uifjxryM5V8qg&s",
+    ],
   },
   {
     id: 9,
@@ -150,8 +160,9 @@ export const products: ProductListing[] = [
     condition: "Good",
     location: "Seattle, WA",
     isSold: false,
-    image:
+    images: [
       "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2UBOrjV_raOUTXeMqGI2uVe_bmQ5qnMbBrw&s",
+    ],
   },
   {
     id: 10,
@@ -167,7 +178,8 @@ export const products: ProductListing[] = [
     condition: "Good",
     location: "Seattle, WA",
     isSold: false,
-    image:
+    images: [
       "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTo9AUql84MSPVXggXT_jDp0aEObY2RUEOYXQ&s",
+    ],
   },
 ];

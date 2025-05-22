@@ -2,7 +2,7 @@ import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 
 type Product = {
   id: number;
-  image: string;
+  images: string[];
   title: string;
   price: number;
 };
@@ -21,7 +21,7 @@ export default function ProductCard({ product, onPress }: ProductCardProps) {
             alt="Product picture on white background."
             resizeMode="cover"
             style={styles.cardImage}
-            source={{ uri: product.image }}
+            source={{ uri: product.images[0] }}
             defaultSource={{ uri: "https://placehold.co/160" } /* placeholder image */}
           />
         </View>

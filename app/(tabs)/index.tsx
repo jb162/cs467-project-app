@@ -24,17 +24,17 @@ export default function Index() {
 
     switch (sortBy) {
       case 'newest':
-      updated =  updated.sort(
+        updated = updated.sort(
           (a, b) =>
             new Date(b.createdDatetime).getTime() -
             new Date(a.createdDatetime).getTime()
         );
         break;
       case 'oldest':
-          updated = updated.sort(
-            (a, b) =>
-              new Date(a.createdDatetime).getTime() -
-              new Date(b.createdDatetime).getTime()
+        updated = updated.sort(
+          (a, b) =>
+            new Date(a.createdDatetime).getTime() -
+            new Date(b.createdDatetime).getTime()
         );
         break;
       case 'lowToHigh':
