@@ -1,26 +1,68 @@
-import { StyleSheet, SafeAreaView, View, TouchableOpacity, TextInput, FlatList, Image, RefreshControl } from 'react-native';
+import { StyleSheet, SafeAreaView, View, TouchableOpacity, Text, TextInput, FlatList, Image, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import ProductCard from '../ProductCard';
 import { products } from '../shared/mockProducts';
-
+import FilterComponent from '../filter';
+import { COLORS } from '../shared/colors';
 
 export default function Index() {
   const router = useRouter();
   const [inputTerm, setInputTerm] = useState('');
+  const [filteredProducts, setFilteredProducts] = useState(products);
   const [refreshing, setRefreshing] = useState(false);
+  const [showFilter, setShowFilter] = useState(false);
+  const [selectedSort, setSelectedSort] = useState('newest');
+
+  const updateProductList = (searchTerm: string, sortBy: string) => {
+    const term = searchTerm.toLowerCase();
+
+    let updated = products.filter(product =>
+      product.title.toLowerCase().includes(term)
+    );
+
+    switch (sortBy) {
+      case 'newest':
+      updated =  updated.sort(
+          (a, b) =>
+            new Date(b.createdDatetime).getTime() -
+            new Date(a.createdDatetime).getTime()
+        );
+        break;
+      case 'oldest':
+          updated = updated.sort(
+            (a, b) =>
+              new Date(a.createdDatetime).getTime() -
+              new Date(b.createdDatetime).getTime()
+        );
+        break;
+      case 'lowToHigh':
+        updated = updated.sort((a, b) => a.price - b.price);
+        break;
+      case 'highToLow':
+        updated = updated.sort((a, b) => b.price - a.price);
+        break;
+    }
+
+    setFilteredProducts(updated);
+  };
 
   const handleSearch = () => {
-    // Testing search functionality
-    console.log('Search term:', inputTerm);
+    updateProductList(inputTerm, selectedSort);
+  };
+
+  const handleSort = (sortBy: string) => {
+    setSelectedSort(sortBy);
+    updateProductList(inputTerm, sortBy);
   }
 
   const handleRefresh = () => {
-    // Testing refresh functionality
-    console.log('Refreshing...');
     setRefreshing(true);
     setTimeout(() => {
+      setInputTerm('');
+      setSelectedSort('newest')
+      updateProductList('', 'newest')
       setRefreshing(false);
     }, 1000);
   };
@@ -28,17 +70,18 @@ export default function Index() {
   // redirects to Product Details view
   const handleProductClick = (item: any) => {
     router.push(`/product/${item.id}`)
+    setShowFilter(false)
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f2f2f2' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }}>
       <View style={styles.header}>
         <View style={styles.searchContainer}>
           <View style={styles.search}>
             <TouchableOpacity
               accessibilityLabel="search button"
               accessibilityRole="button"
-              onPress={() => {/* placeholder functionality */ }}
+              onPress={handleSearch}
             >
               <Ionicons name="search" size={24} color="black" style={{ marginRight: 8 }} />
             </TouchableOpacity>
@@ -46,9 +89,12 @@ export default function Index() {
             <TextInput
               style={styles.input}
               placeholder="Search for sale"
-              placeholderTextColor="#888"
+              placeholderTextColor={COLORS.textGray}
               value={inputTerm}
-              onChangeText={setInputTerm}
+              onChangeText={(text) => {
+                setInputTerm(text);
+                updateProductList(text, selectedSort);
+              }}
               onSubmitEditing={handleSearch}
               returnKeyType="search"
               autoCapitalize="none"
@@ -57,7 +103,7 @@ export default function Index() {
             <TouchableOpacity
               accessibilityLabel="filter button"
               accessibilityRole="button"
-              onPress={() => {/* placeholder functionality */ }}
+              onPress={() => setShowFilter(true)}
             >
               <Ionicons name="filter" size={24} color="black" style={{ marginLeft: 8 }} />
             </TouchableOpacity>
@@ -65,9 +111,15 @@ export default function Index() {
         </View>
       </View>
 
+      {filteredProducts.length === 0 && (
+        <View>
+          <Text style={styles.fallbackText}>No matching items found.</Text>
+        </View>
+      )}
+
       <FlatList
         contentContainerStyle={styles.content}
-        data={products}
+        data={filteredProducts}
         keyExtractor={(item) => item.id.toString()}
         numColumns={2}
         refreshing={refreshing}
@@ -79,6 +131,17 @@ export default function Index() {
           />
         )}
       />
+
+      {showFilter && (
+        <View>
+          <FilterComponent
+            onClose={() => setShowFilter(false)}
+            onSelectSort={handleSort}
+            selectedSort={selectedSort}
+          />
+        </View>
+      )}
+
     </SafeAreaView>
   );
 }
@@ -98,7 +161,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'white',
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: COLORS.border,
     paddingHorizontal: 10,
     paddingVertical: 8,
   },
@@ -107,5 +170,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     padding: 6,
     marginHorizontal: 8,
+  },
+  fallbackText: {
+    textAlign: 'center',
+    paddingTop: 10,
   }
 })
