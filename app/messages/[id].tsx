@@ -2,9 +2,9 @@ import { useLocalSearchParams, useNavigation } from 'expo-router';
 import { useState, useEffect, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { mockMessages } from '../shared/mockMessages'; // Import mock messages
+import { getMessagesBetweenUsers, sendMessage } from '../../shared/api/messages';
 
-const CURRENT_USER = 'ikeafan'; // update this to get the current user
+const CURRENT_USER = 'ikeafan'; // Update to current user later
 
 type Message = {
   id: number;
@@ -30,50 +30,46 @@ export default function MessageThreadScreen() {
     }
 
     fetchMessages();
-  }, [name]);
+  }, [receiver]);
 
-  const fetchMessages = () => {
-    const filteredMessages = mockMessages.filter(
-      (msg) =>
-        (msg.sender === CURRENT_USER && msg.recipient === receiver) ||
-        (msg.sender === receiver && msg.recipient === CURRENT_USER)
-    );
-
-    const formattedMessages: Message[] = filteredMessages.map((msg) => ({
-      id: msg.id,
-      text: msg.message_body,
-      myMessage: msg.sender === CURRENT_USER,
-      timestamp: new Date(msg.sent_datetime).toLocaleString(),
-    }));
-
-    setMessages(formattedMessages);
+  const fetchMessages = async () => {
+    try {
+      const backendMessages = await getMessagesBetweenUsers(CURRENT_USER, String(receiver));
+      const formattedMessages: Message[] = backendMessages.map((msg) => ({
+        id: Number(msg.id),
+        text: msg.message_body,
+        myMessage: msg.sender === CURRENT_USER,
+        timestamp: new Date(msg.sent_datetime).toLocaleString(),
+      }));
+      setMessages(formattedMessages);
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+    }
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (newMessage.trim()) {
-      const messageData = {
-        sender: CURRENT_USER,
-        receiver,
-        message_body: newMessage,
-        sent_datetime: new Date().toISOString(),
-      };
+      try {
+        const sent = await sendMessage({
+          sender: CURRENT_USER,
+          receiver: String(receiver),
+          message_body: newMessage,
+        });
 
-      const newMessageData = {
-        id: Date.now(),
-        ...messageData,
-      };
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Number(sent.id),
+            text: sent.message_body,
+            myMessage: true,
+            timestamp: new Date(sent.sent_datetime).toLocaleString(),
+          },
+        ]);
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: newMessageData.id,
-          text: newMessageData.message_body,
-          myMessage: true,
-          timestamp: new Date(newMessageData.sent_datetime).toLocaleString(),
-        },
-      ]);
-
-      setNewMessage('');
+        setNewMessage('');
+      } catch (error) {
+        console.error('Error sending message:', error);
+      }
     }
   };
 
@@ -108,7 +104,7 @@ export default function MessageThreadScreen() {
                 <Text
                   style={[
                     styles.timestamp,
-                    message.myMessage ? styles.timestampRight : styles.timestampLeft,  // Conditional alignment
+                    message.myMessage ? styles.timestampRight : styles.timestampLeft,
                   ]}
                   accessibilityRole="text"
                   accessibilityLabel={`Sent at ${message.timestamp}`}
@@ -179,16 +175,14 @@ const styles = StyleSheet.create({
     color: '#bbb',
     fontSize: 12,
     marginTop: 4,
-    
-    textAlign: 'left', 
   },
   timestampLeft: {
-    textAlign: 'left', 
-    marginLeft: 10
+    textAlign: 'left',
+    marginLeft: 10,
   },
   timestampRight: {
-    textAlign: 'right', 
-    marginRight: 10
+    textAlign: 'right',
+    marginRight: 10,
   },
   senderName: {
     fontSize: 14,
@@ -198,11 +192,11 @@ const styles = StyleSheet.create({
   },
   mySenderName: {
     textAlign: 'right',
-    marginRight: 10
+    marginRight: 10,
   },
   otherSenderName: {
     textAlign: 'left',
-    marginLeft: 10
+    marginLeft: 10,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -225,13 +219,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#ad5ff5',
     width: 40,
     height: 40,
-    justifyContent: 'center', 
+    justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 15,
-  },
-  sendButtonText: {
-    color: '#fff',
-    fontSize: 16,
   },
   noMessagesText: {
     color: '#aaa',
