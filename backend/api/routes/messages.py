@@ -6,47 +6,61 @@ messages_bp = Blueprint('messages', __name__, url_prefix='/v1')
 
 @messages_bp.route('/Messages', methods=['GET'])
 def get_messages():
-    """Get all messages between a sender and receiver"""
+    """Get messages between a sender and receiver OR all messages involving a user (inbox view)"""
     try:
         sender = request.args.get('sender')
         receiver = request.args.get('receiver')
+        user = request.args.get('user')  # for inbox
         page = request.args.get('page', default=1, type=int)
         page_size = request.args.get('page_size', default=100, type=int)
-
-        if not sender or not receiver:
-            return jsonify({"error": "Both sender and receiver are required."}), 400
-
         offset = (page - 1) * page_size
 
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Get total message count
-        cursor.execute("""
-            SELECT COUNT(*) FROM messages
-            WHERE (sender = %s AND receiver = %s) OR (sender = %s AND receiver = %s)
-        """, (sender, receiver, receiver, sender))
-        total_count = cursor.fetchone()[0]
+        if sender and receiver:
+            # Thread between two users
+            cursor.execute("""
+                SELECT COUNT(*) FROM messages
+                WHERE (sender = %s AND receiver = %s) OR (sender = %s AND receiver = %s)
+            """, (sender, receiver, receiver, sender))
+            total_count = cursor.fetchone()[0]
 
-        # Get messages
-        cursor.execute("""
-            SELECT id, sender, receiver, sent_datetime, message_body
-            FROM messages
-            WHERE (sender = %s AND receiver = %s) OR (sender = %s AND receiver = %s)
-            ORDER BY sent_datetime ASC
-            LIMIT %s OFFSET %s
-        """, (sender, receiver, receiver, sender, page_size, offset))
+            cursor.execute("""
+                SELECT id, sender, receiver, sent_datetime, message_body
+                FROM messages
+                WHERE (sender = %s AND receiver = %s) OR (sender = %s AND receiver = %s)
+                ORDER BY sent_datetime ASC
+                LIMIT %s OFFSET %s
+            """, (sender, receiver, receiver, sender, page_size, offset))
+
+        elif user:
+            # Inbox
+            cursor.execute("""
+                SELECT COUNT(*) FROM messages
+                WHERE sender = %s OR receiver = %s
+            """, (user, user))
+            total_count = cursor.fetchone()[0]
+
+            cursor.execute("""
+                SELECT id, sender, receiver, sent_datetime, message_body
+                FROM messages
+                WHERE sender = %s OR receiver = %s
+                ORDER BY sent_datetime DESC
+                LIMIT %s OFFSET %s
+            """, (user, user, page_size, offset))
+
+        else:
+            return jsonify({"error": "Provide either sender and receiver, or user"}), 400
 
         rows = cursor.fetchall()
-        messages = []
-        for row in rows:
-            messages.append({
-                'id': row[0],
-                'sender': row[1],
-                'receiver': row[2],
-                'sent_datetime': row[3].isoformat() if row[3] else None,
-                'message_body': row[4]
-            })
+        messages = [{
+            'id': row[0],
+            'sender': row[1],
+            'receiver': row[2],
+            'sent_datetime': row[3].isoformat() if row[3] else None,
+            'message_body': row[4]
+        } for row in rows]
 
         total_pages = (total_count + page_size - 1) // page_size
 
@@ -113,14 +127,12 @@ def delete_message(message_id):
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Check if message exists
         cursor.execute("SELECT 1 FROM messages WHERE id = %s", (message_id,))
         if cursor.fetchone() is None:
             cursor.close()
             conn.close()
             return jsonify({"error": "Message not found"}), 404
 
-        # Delete the message
         cursor.execute("DELETE FROM messages WHERE id = %s", (message_id,))
         conn.commit()
 
