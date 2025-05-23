@@ -1,125 +1,164 @@
-import { useLocalSearchParams, useNavigation } from 'expo-router';
-import { useLayoutEffect } from 'react';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
+import { useLayoutEffect, useEffect, useState } from 'react';
 import {
-    View, Text, Image, StyleSheet, ScrollView, FlatList, TouchableOpacity,
+  View, Text, Image, StyleSheet, ScrollView, FlatList, TouchableOpacity, ActivityIndicator,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { users } from '../shared/mockSellers';
-import { products } from '../shared/mockProducts';
-import { mockMessages } from '../shared/mockMessages';
-import { useRouter } from 'expo-router';
+import { getUser, User } from '../../shared/api/users';
+import { getListings, Listing } from '../../shared/api/listings';
+import { getMessagesBetweenUsers } from '../../shared/api/messages';
+import { getListingImages } from '../../shared/api/images';
 
-const CURRENT_USER = 'ikeafan';
+const CURRENT_USER = 'ikeafan'; // Update this later with API
 
 export default function SellerProfile() {
-    const { id } = useLocalSearchParams();
-    const navigation = useNavigation();
-    const router = useRouter();
-    const sellerId = parseInt(id as string, 10);
-    const seller = users.find((s) => s.id === sellerId);
+  const { id } = useLocalSearchParams();
+  const navigation = useNavigation();
+  const router = useRouter();
+  const sellerUsername = id as string;
 
-    useLayoutEffect(() => {
-        navigation.setOptions({
-            headerTitle: '',
-            headerLeft: () => (
-                <TouchableOpacity onPress={() => navigation.goBack()} style={{ paddingLeft: 16 }} accessibilityRole="button" accessibilityLabel="Go back">
-                    <Ionicons name="arrow-back" size={24} color="black" />
-                </TouchableOpacity>
-            ),
-        });
-    }, [navigation]);
+  const [seller, setSeller] = useState<User | null>(null);
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [listingImages, setListingImages] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(true);
 
-    if (!seller) {
-        return (
-            <View style={styles.center}>
-                <Text>Seller not found.</Text>
-            </View>
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTitle: '',
+      headerLeft: () => (
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={{ paddingLeft: 16 }}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+        >
+          <Ionicons name="arrow-back" size={24} color="black" />
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation]);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [fetchedSeller, allListings] = await Promise.all([
+          getUser(sellerUsername),
+          getListings(),
+        ]);
+
+        setSeller(fetchedSeller);
+        const filtered = allListings.listings.filter((l) => l.seller === sellerUsername);
+        setListings(filtered);
+
+        const imageMap: Record<number, string> = {};
+        await Promise.all(
+          filtered.map(async (listing) => {
+            try {
+              const images = await getListingImages(Number(listing.id));
+              const primaryImage = images.find((img) => img.is_primary) || images[0];
+              if (primaryImage) {
+                imageMap[Number(listing.id)] = primaryImage.url;
+              }
+            } catch (error) {
+              console.warn(`No images found for listing ${listing.id}`);
+            }
+          })
         );
+        setListingImages(imageMap);
+      } catch (error) {
+        console.error('Error loading seller profile:', error);
+      } finally {
+        setLoading(false);
+      }
     }
 
-    const sellerProducts = products.filter((product) => product.seller === seller.username);
+    fetchData();
+  }, [sellerUsername]);
 
-    const handleMessagePress = () => {
-        const hasMessages = mockMessages.some(
-            (m) =>
-                (m.sender === CURRENT_USER && m.recipient === seller.username) ||
-                (m.sender === seller.username && m.recipient === CURRENT_USER)
-        );
+  const handleMessagePress = async () => {
+    try {
+      await getMessagesBetweenUsers(CURRENT_USER, sellerUsername);
+      router.push(`/messages/${sellerUsername}`);
+    } catch (error) {
+      console.error('Error checking or creating message thread:', error);
+    }
+  };
 
-        router.push(`/messages/${seller.username}`);
-    };
-
+  if (loading) {
     return (
-        <ScrollView contentContainerStyle={styles.container}>
-            <View style={styles.profileHeader}>
-                <Image
-                    source={{ uri: seller.image }}
-                    style={styles.image}
-                    accessibilityLabel={`Image of ${seller.name}`}
-                    accessibilityRole="image"
-                />
-                <View style={styles.profileInfo}>
-                    <Text style={styles.name} accessibilityRole="text" accessibilityLabel={`Name: ${seller.name}`}>
-                        {seller.name}
-                    </Text>
-                    <Text style={styles.text} accessibilityRole="text" accessibilityLabel={`Location: ${seller.location}`}>
-                        {seller.location}
-                    </Text>
-                    <Text style={styles.rating} accessibilityRole="text" accessibilityLabel={`Rating: ${seller.rating?.toFixed(1) || 'N/A'}`}>
-                        Rating: {seller.rating?.toFixed(1) || 'N/A'}
-                    </Text>
-                    <Text style={styles.joinedDate} accessibilityRole="text" accessibilityLabel={`Joined date: ${new Date(seller.createdDatetime).toLocaleString('default', { month: 'short', year: 'numeric' })}`}>
-                        Joined:{' '}
-                        {new Date(seller.createdDatetime).toLocaleString('default', {
-                            month: 'short',
-                            year: 'numeric',
-                        })}
-                    </Text>
-                </View>
-            </View>
-
-            <TouchableOpacity 
-                style={styles.messageButton} 
-                onPress={handleMessagePress} 
-                accessibilityRole="button" 
-                accessibilityLabel="Send Message"
-            >
-                <Text style={styles.messageButtonText}>Send Message</Text>
-            </TouchableOpacity>
-
-            <Text style={styles.label} accessibilityRole="text" accessibilityLabel={`${seller.name}'s Listings`}>
-                {seller.name}'s Listings
-            </Text>
-
-            <FlatList
-                contentContainerStyle={styles.productsList}
-                data={sellerProducts}
-                keyExtractor={(item) => item.id.toString()}
-                numColumns={2}
-                renderItem={({ item }) => (
-                    <TouchableOpacity
-                        style={styles.productCard}
-                        onPress={() => router.push(`/product/${item.id}`)}
-                        accessibilityRole="button"
-                        accessibilityLabel={`Product: ${item.title}, Price: $${item.price}`}
-                    >
-                        <Image 
-                            source={{ uri: item.image }} 
-                            style={styles.productImage} 
-                            accessibilityLabel={`Image of ${item.title}`}
-                            accessibilityRole="image"
-                        />
-                        <Text style={styles.productTitle} accessibilityRole="text" accessibilityLabel={`Title: ${item.title}`}>
-                            {item.title}
-                        </Text>
-                        <Text style={styles.productPrice} accessibilityRole="text" accessibilityLabel={`Price: $${item.price}`}>
-                            ${item.price}
-                        </Text>
-                    </TouchableOpacity>
-                )}
-            />
-        </ScrollView>
+      <View style={styles.center}>
+        <ActivityIndicator size="large" />
+      </View>
     );
+  }
+
+  if (!seller) {
+    return (
+      <View style={styles.center}>
+        <Text>Seller not found.</Text>
+      </View>
+    );
+  }
+
+  return (
+    <ScrollView contentContainerStyle={styles.container}>
+      <View style={styles.profileHeader}>
+        {/* Seller images will need to be added to the image or user API 
+        <Image
+          source={{ uri: seller.image || 'https://via.placeholder.com/120' }}
+          style={styles.image}
+          accessibilityLabel={`Image of ${seller.username}`}
+          accessibilityRole="image"
+        />*/}
+        <View style={styles.profileInfo}>
+          <Text style={styles.name}>{seller.username}</Text>
+          <Text style={styles.text}>{seller.email}</Text>
+          <Text style={styles.joinedDate}>
+            Joined:{' '}
+            {seller.created_datetime
+              ? new Date(seller.created_datetime).toLocaleString('default', {
+                  month: 'short',
+                  year: 'numeric',
+                })
+              : 'N/A'}
+          </Text>
+        </View>
+      </View>
+
+      <TouchableOpacity
+        style={styles.messageButton}
+        onPress={handleMessagePress}
+        accessibilityRole="button"
+        accessibilityLabel="Send Message"
+      >
+        <Text style={styles.messageButtonText}>Send Message</Text>
+      </TouchableOpacity>
+
+      <Text style={styles.label}>{seller.username}'s Listings</Text>
+
+      <FlatList
+        contentContainerStyle={styles.productsList}
+        data={listings}
+        keyExtractor={(item) => item.id.toString()}
+        numColumns={2}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={styles.productCard}
+            onPress={() => router.push(`/product/${item.id}`)}
+            accessibilityRole="button"
+            accessibilityLabel={`Product: ${item.title}, Price: $${item.price}`}
+          >
+            <Image
+              source={{ uri: listingImages[item.id] || 'https://via.placeholder.com/150' }}
+              style={styles.productImage}
+            />
+            <Text style={styles.productTitle}>{item.title}</Text>
+            <Text style={styles.productPrice}>${item.price}</Text>
+          </TouchableOpacity>
+        )}
+      />
+    </ScrollView>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -211,6 +250,8 @@ const styles = StyleSheet.create({
     productTitle: {
         fontSize: 16,
         fontWeight: '600',
+        borderTopLeftRadius: 8,
+        borderTopRightRadius: 8,
         margin: 8,
     },
     productPrice: {
