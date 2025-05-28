@@ -120,7 +120,7 @@ export default function PostScreen() {
 
                     <TouchableOpacity style={styles.formAction} onPress={handleCreateListing}>
                         <View style={styles.btn}>
-                            <Text style={styles.btnTxt}>Create listing</Text>
+                            <Text style={styles.btnTxt}>Create post</Text>
                         </View>
                     </TouchableOpacity>
                  </View>
