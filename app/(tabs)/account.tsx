@@ -1,5 +1,5 @@
 import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { sellers } from '../shared/mockSellers';
+import { users } from '../shared/mockSellers';
 import fallbackImage from '../../assets/images/fallback.png';
 import { products } from '../shared/mockProducts';
 import ProductCard from '../ProductCard';
@@ -9,7 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useEditAccount } from '../shared/EditAccountContext';
 
 // Placeholder testing functionality
-const seller = sellers[0];
+const seller = users[0];
 
 export default function AccountScreen() {
     const router = useRouter();

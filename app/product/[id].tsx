@@ -1,6 +1,7 @@
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
-import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { useLayoutEffect } from 'react';
+import { View, Text, Image, StyleSheet, ScrollView, 
+    TouchableOpacity, Modal, Dimensions } from 'react-native';
+import { useLayoutEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { products } from '../shared/mockProducts';
 import { users } from '../shared/mockSellers';
@@ -9,7 +10,6 @@ import fallbackImage from '../../assets/images/fallback.png';
 const screenWidth = Dimensions.get('window').width;
 
 export default function ProductDetail() {
-    const router = useRouter();
     const navigation = useNavigation();
     const router = useRouter();
     const { id } = useLocalSearchParams();
@@ -20,10 +20,6 @@ export default function ProductDetail() {
 
     const handleShare = () => {
         console.log('handleShare() called');
-    };
-
-    const handleFavorite = () => {
-        console.log('handleFavorite() called');
     };
 
     useLayoutEffect(() => {
