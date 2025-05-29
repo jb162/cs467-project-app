@@ -7,7 +7,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { getUser, User } from '../../shared/api/users'; 
 
-const CURRENT_USER = 'ikeafan'; // Update to current user later
+const CURRENT_USER = 'test_user_1'; // Update to current user later
 
 type Thread = {
   id: string;
@@ -38,7 +38,7 @@ export default function MessagesScreen() {
     async function fetchMessagesAndUsers() {
       try {
         const response = await fetch(
-          'http://backend-api-729553473022.us-central1.run.app/v1/Messages'
+          `https://backend-api-729553473022.us-central1.run.app/v1/Messages?user=${CURRENT_USER}`
         );
         const data: BackendMessage[] = await response.json();
 
@@ -225,13 +225,23 @@ export default function MessagesScreen() {
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={styles.container}>
-            <FlatList
-              data={filteredThreads}
-              keyExtractor={(item) => item.id}
-              renderItem={renderItem}
-              contentContainerStyle={{ paddingBottom: 20 }}
-              keyboardShouldPersistTaps="handled"
-            />
+            {filteredThreads.length === 0 ? (
+              <View style={styles.noMessagesContainer}>
+                <Text style={styles.noMessagesText}>
+                  {messageSearch
+                    ? 'No messages match your search.'
+                    : 'No messages to display'}
+                </Text>
+              </View>
+            ) : (
+              <FlatList
+                data={filteredThreads}
+                keyExtractor={(item) => item.id}
+                renderItem={renderItem}
+                contentContainerStyle={{ paddingBottom: 20 }}
+                keyboardShouldPersistTaps="handled"
+              />
+            )}
           </View>
         </TouchableWithoutFeedback>
 
@@ -418,5 +428,17 @@ const styles = StyleSheet.create({
   },
   bold: {
     fontWeight: 'bold',
+  },
+  noMessagesContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 0,
+  },
+  noMessagesText: {
+    color: '#aaa',
+    fontSize: 18,
+    textAlign: 'center',
+    paddingHorizontal: 20,
   },
 });

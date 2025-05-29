@@ -4,7 +4,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 
 import { MaterialIcons } from '@expo/vector-icons';
 import { getMessagesBetweenUsers, sendMessage } from '../../shared/api/messages';
 
-const CURRENT_USER = 'ikeafan'; // Update to current user later
+const CURRENT_USER = 'test_user_1'; // Update to current user later
 
 type Message = {
   id: number;
@@ -82,7 +82,7 @@ export default function MessageThreadScreen() {
       <ScrollView style={styles.messagesContainer} accessibilityRole="list" accessible>
         {messages.length === 0 ? (
           <Text style={styles.noMessagesText} accessibilityRole="alert">
-            No messages yet.
+            No messages to display
           </Text>
         ) : (
           messages.map((message) => (

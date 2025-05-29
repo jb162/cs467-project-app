@@ -34,9 +34,9 @@ export async function getMessagesBetweenUsers(
   return json.messages;
 }
 
-// GET /Messages/Inbox?user=username
+// GET /Messages?user=username
 export async function getInboxMessages(user: string): Promise<Message[]> {
-  const res = await fetch(`${BASE_URL}/Messages/Inbox?user=${user}`);
+  const res = await fetch(`${BASE_URL}/Messages?user=${user}`);
 
   if (!res.ok) {
     const err = await res.json();
@@ -44,7 +44,7 @@ export async function getInboxMessages(user: string): Promise<Message[]> {
   }
 
   const json = await res.json();
-  return json.inbox;
+  return json.messages;
 }
 
 // POST /Messages
@@ -62,5 +62,6 @@ export async function sendMessage(payload: CreateMessagePayload): Promise<Messag
     throw new Error(err.error || "Failed to send message");
   }
 
-  return res.json();
+  const json = await res.json();
+  return json as Message;
 }
