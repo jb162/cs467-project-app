@@ -16,7 +16,7 @@ export interface ProductListing {
   isSold: boolean;
 
   // temporary attribute
-  image?: string;
+  images: string[];
 }
 
 export interface User {
