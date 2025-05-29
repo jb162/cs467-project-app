@@ -20,6 +20,7 @@ export interface ProductListing {
 }
 
 export interface User {
+  id: number;
   username: string;
   email: string | null;
   passwordHash: string;
@@ -31,4 +32,12 @@ export interface User {
   name?: string;
   rating?: number;
   location?: string;
+}
+
+export interface Message {
+  id: number;
+  sender: string;
+  recipient: string;
+  message_body: string;
+  sent_datetime: string;
 }

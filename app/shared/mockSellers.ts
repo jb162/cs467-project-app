@@ -1,7 +1,8 @@
 import { User } from "./interfaces";
 
-export const sellers: User[] = [
+export const users: User[] = [
   {
+    id: 1,
     username: "justin123",
     email: "justin@example.com",
     passwordHash: "hashed_justin123",
@@ -13,6 +14,7 @@ export const sellers: User[] = [
     location: "Seattle, WA",
   },
   {
+    id: 2,
     username: "sneakerhead88",
     email: "mikej@example.com",
     passwordHash: "hashed_mikej",
@@ -24,6 +26,7 @@ export const sellers: User[] = [
     location: "Portland, OR",
   },
   {
+    id: 3,
     username: "maclover",
     email: "sara.mac@example.com",
     passwordHash: "hashed_maclover",
@@ -35,6 +38,7 @@ export const sellers: User[] = [
     location: "San Francisco, CA",
   },
   {
+    id: 4,
     username: "deskdealer",
     email: "kevin.desk@example.com",
     passwordHash: "hashed_deskdealer",
@@ -46,6 +50,7 @@ export const sellers: User[] = [
     location: "Seattle, WA",
   },
   {
+    id: 5,
     username: "musicman",
     email: "lee.music@example.com",
     passwordHash: "hashed_musicman",
@@ -57,6 +62,7 @@ export const sellers: User[] = [
     location: "Tacoma, WA",
   },
   {
+    id: 6,
     username: "shutterbug",
     email: "anna.camera@example.com",
     passwordHash: "hashed_shutterbug",
@@ -68,6 +74,7 @@ export const sellers: User[] = [
     location: "Bellevue, WA",
   },
   {
+    id: 7,
     username: "homeofficepro",
     email: "david.office@example.com",
     passwordHash: "hashed_homeofficepro",
@@ -79,6 +86,7 @@ export const sellers: User[] = [
     location: "Redmond, WA",
   },
   {
+    id: 8,
     username: "techguy42",
     email: "tom.tech@example.com",
     passwordHash: "hashed_techguy42",
@@ -90,6 +98,7 @@ export const sellers: User[] = [
     location: "Kirkland, WA",
   },
   {
+    id: 9,
     username: "bikerbro",
     email: "matt.bike@example.com",
     passwordHash: "hashed_bikerbro",
@@ -101,6 +110,7 @@ export const sellers: User[] = [
     location: "Seattle, WA",
   },
   {
+    id: 10,
     username: "ikeafan",
     email: "amy.shelf@example.com",
     passwordHash: "hashed_ikeafan",
