@@ -98,7 +98,6 @@ export default function Index() {
 
   // redirects to Product Details view
   const handleProductClick = (item: any) => {
-    console.log("Clicked product ID:", item.id);
     router.push(`/product/${item.id}`)
     setShowFilter(false)
   }
