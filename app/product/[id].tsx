@@ -9,6 +9,7 @@ import { products } from '../shared/mockProducts';
 import { users } from '../shared/mockSellers';
 import fallbackImage from '../../assets/images/fallback.png';
 import { getUser, updateFavoriteListings } from '@/shared/api/users';
+import Toast from 'react-native-toast-message';
 
 
 const screenWidth = Dimensions.get('window').width;
@@ -19,12 +20,9 @@ export default function ProductDetail() {
     const { id } = useLocalSearchParams();
     const productId = parseInt(id as string, 10);
     const product = products.find((p) => p.id === productId);
+    const [seller, setSeller] = useState<any | null>(null);
     const [fullscreen, setFullscreen] = useState(false);
     const [imageIndex, setImageIndex] = useState(0);
-
-    const handleShare = () => {
-        console.log('handleShare() called');
-    };
 
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -96,11 +94,11 @@ export default function ProductDetail() {
             const username = 'justin'; // Replace with actual logged-in user
 
             const user = await getUser(username);
-            const favorites = user.favorite_listings || [];
+            const favorites: string[] = (user.favorite_listings || []).map(String);
 
             const alreadyFavorited = favorites.includes(productId.toString());
             const updatedFavorites = alreadyFavorited
-                ? favorites.filter((id: string) => id !== productId.toString())
+                ? favorites.filter((id) => id !== productId.toString())
                 : [...favorites, productId.toString()];
 
             await updateFavoriteListings(username, updatedFavorites);
@@ -112,6 +110,12 @@ export default function ProductDetail() {
         } catch (err) {
             Toast.show({ type: 'error', text1: 'Could not update favorites' });
             console.error(err);
+        }
+    };
+
+    const handleSellerInfo = () => {
+        if (seller) {
+            router.push(`/user/${seller.username}`);
         }
     };
 
@@ -199,14 +203,14 @@ export default function ProductDetail() {
                     <View style={styles.sellerInfoRow}>
                         <Image source={{ uri: seller.image }} style={styles.sellerImage} defaultSource={fallbackImage} accessibilityLabel={`Image of ${seller.name}`} />
                         <View style={styles.sellerDetailsContainer}>
-                            <Text style={styles.sellerName}>{seller.name}</Text>
+                            <Text style={styles.sellerName}>{seller.full_name}</Text>
                             <Text style={styles.sellerMeta}>
-                                Joined: {new Date(seller.createdDatetime).toLocaleString('default', { month: 'short', year: 'numeric' })} | Rating: {seller.rating?.toFixed(1) || 'N/A'}
+                                Joined: {new Date(seller.created_datetime).toLocaleString('default', { month: 'short', year: 'numeric' })} | Rating: {seller.rating?.toFixed(1) || 'N/A'}
                             </Text>
                             <Text style={styles.sellerMeta}>{seller.location}</Text>
                         </View>
                         <TouchableOpacity
-                            onPress={() => router.push(`/messages/new?sellerId=${seller.id}`)}
+                            onPress={() => router.push(`/messages/new?sellerId=${seller.username}`)}
                             accessibilityLabel="Message seller"
                             accessibilityRole="button"
                             style={styles.chatButton}
