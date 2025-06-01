@@ -1,12 +1,13 @@
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { View, Text, Image, StyleSheet, ScrollView, Platform,
-    TouchableOpacity, Modal, Dimensions } from 'react-native';
-import { useLayoutEffect, useState } from 'react';
+    TouchableOpacity, Modal, Dimensions, ActivityIndicator } from 'react-native';
+import { useLayoutEffect, useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import * as Linking from 'expo-linking';
 import { products } from '../shared/mockProducts';
 import fallbackImage from '../../assets/images/fallback.png';
+import { getListingById, Listing } from '@/shared/api/listings';
 import { getUser, updateFavoriteListings } from '@/shared/api/users';
 import { getListingImages, ListingImage } from '@/shared/api/images';
 import Toast from 'react-native-toast-message';
@@ -17,59 +18,16 @@ const screenWidth = Dimensions.get('window').width;
 export default function ProductDetail() {
     const navigation = useNavigation();
     const router = useRouter();
-    const { id } = useLocalSearchParams();
-    const productId = parseInt(id as string, 10);
-    const product = products.find((p) => p.id === productId);
+    const { id: productId } = useLocalSearchParams();
+    const id = Array.isArray(productId) ? productId[0] : productId;
+    const [product, setProduct] = useState<Listing | null>(null);
     const [seller, setSeller] = useState<any | null>(null);
     const [fullscreen, setFullscreen] = useState(false);
     const [imageIndex, setImageIndex] = useState(0);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    useLayoutEffect(() => {
-        navigation.setOptions({
-            title: '',
-            headerLeft: () => (
-                <TouchableOpacity
-                    onPress={() => router.push('/')}
-                    style={styles.backButton}
-                    accessibilityLabel="Go back to home"
-                    accessibilityRole="button"
-                    hitSlop={10}
-                >
-                    <Ionicons name="arrow-back" size={24} color="black" />
-                </TouchableOpacity>
-            ),
-            headerRight: () => (
-                <View style={styles.header}>
-                    <TouchableOpacity
-                        onPress={handleShare}
-                        accessibilityLabel="Share this listing"
-                        accessibilityRole="button"
-                        hitSlop={10}
-                    >
-                        <Ionicons name="copy-outline" size={24} color="black" />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        onPress={handleFavorite}
-                        accessibilityLabel="Favorite this listing"
-                        accessibilityRole="button"
-                        hitSlop={10}
-                    >
-                        <Ionicons name="heart-outline" size={24} color="black" />
-                    </TouchableOpacity>
-                </View>
-            ),
-        });
-    }, [navigation]);
-
-    if (!product || !product.images || product.images.length === 0) {
-        return (
-            <View style={styles.center}>
-                <Text>Product not found.</Text>
-            </View>
-        );
-    }
-
-    const handleShare = async () => {
+     const handleShare = async () => {
         try {
             const url = Linking.createURL(`/products/${productId}`);
             await Clipboard.setStringAsync(url);
@@ -113,6 +71,91 @@ export default function ProductDetail() {
         }
     };
 
+    // Fetch product by id
+    useEffect(() => {
+        if (!productId || typeof productId !== 'string') {
+        setError('Invalid product ID');
+        setLoading(false);
+        return;
+        }
+
+        async function fetchProduct() {
+        try {
+            setLoading(true);
+            const fetchedProduct = await getListingById(id);
+            setProduct(fetchedProduct);
+
+            // Fetch seller info using fetchedProduct.seller (assumed username)
+            if (fetchedProduct.seller) {
+            const fetchedSeller = await getUser(fetchedProduct.seller);
+            setSeller(fetchedSeller);
+            }
+        } catch (err: any) {
+            setError(err.message || 'Failed to load product');
+        } finally {
+            setLoading(false);
+        }
+        }
+
+        fetchProduct();
+    }, [productId]);
+
+    useLayoutEffect(() => {
+        navigation.setOptions({
+            title: '',
+            headerLeft: () => (
+                <TouchableOpacity
+                    onPress={() => router.push('/')}
+                    style={styles.backButton}
+                    accessibilityLabel="Go back to home"
+                    accessibilityRole="button"
+                    hitSlop={10}
+                >
+                    <Ionicons name="arrow-back" size={24} color="black" />
+                </TouchableOpacity>
+            ),
+            headerRight: () => (
+                <View style={styles.header}>
+                    <TouchableOpacity
+                        onPress={handleShare}
+                        accessibilityLabel="Share this listing"
+                        accessibilityRole="button"
+                        hitSlop={10}
+                    >
+                        <Ionicons name="copy-outline" size={24} color="black" />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        onPress={handleFavorite}
+                        accessibilityLabel="Favorite this listing"
+                        accessibilityRole="button"
+                        hitSlop={10}
+                    >
+                        <Ionicons name="heart-outline" size={24} color="black" />
+                    </TouchableOpacity>
+                </View>
+            ),
+        });
+    }, [navigation, productId, product]);
+
+    if (loading) {
+        return (
+        <View style={styles.center}>
+            <ActivityIndicator size="large" color="#1e88e5" />
+        </View>
+        );
+    }
+
+    if (error || !product) {
+        return (
+        <View style={styles.center}>
+            <Text>{error || 'Product not found.'}</Text>
+        </View>
+        );
+    }
+
+    // load images later
+    const images = product.images?.map(img => typeof img === 'string' ? img : img.url) || [];
+
     const handleSellerInfo = () => {
         if (seller) {
             router.push(`/user/${seller.username}`);
@@ -120,17 +163,17 @@ export default function ProductDetail() {
     };
 
     const goPrev = () => {
-        setImageIndex((prev) => (prev - 1 + product.images.length) % product.images.length);
+        setImageIndex((prev) => (prev - 1 + images.length) % images.length);
     };
 
     const goNext = () => {
-        setImageIndex((prev) => (prev + 1) % product.images.length);
+        setImageIndex((prev) => (prev + 1) % images.length);
     };
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
             <View style={styles.carouselWrapper} accessible>
-                {product.images.length > 1 && (
+                {images.length > 1 && (
                     <TouchableOpacity
                         onPress={goPrev}
                         style={styles.carouselArrowLeft}
@@ -147,13 +190,13 @@ export default function ProductDetail() {
                     accessibilityRole="button"
                 >
                     <Image
-                        source={{ uri: product.images[imageIndex] }}
+                        source={{ uri: images[imageIndex] }}
                         style={styles.image}
                         defaultSource={fallbackImage}
                         accessibilityLabel={`Image ${imageIndex + 1} of ${product.title}`}
                     />
                 </TouchableOpacity>
-                {product.images.length > 1 && (
+                {images.length > 1 && (
                     <TouchableOpacity
                         onPress={goNext}
                         style={styles.carouselArrowRight}
@@ -166,9 +209,9 @@ export default function ProductDetail() {
                 )}
             </View>
 
-            {product.images.length > 1 && (
+            {images.length > 1 && (
                 <View style={styles.dotsContainer} accessible accessibilityLabel="Image carousel dots">
-                    {product.images.map((_, i) => (
+                    {images.map((_, i) => (
                         <View
                             key={i}
                             style={[styles.dot, i === imageIndex && styles.activeDot]}
@@ -184,13 +227,15 @@ export default function ProductDetail() {
             <Text style={styles.text}>{product.description}</Text>
 
             <Text style={styles.label}>Details</Text>
+            {/* Commenting out, Category not in DB. Can update to Tags.
             <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Category:</Text>
                 <Text style={styles.detailText}>{product.category}</Text>
             </View>
+            */}
             <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Condition:</Text>
-                <Text style={styles.detailText}>{product.condition}</Text>
+                <Text style={styles.detailText}>{product.item_condition}</Text>
             </View>
             <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Location:</Text>
@@ -205,7 +250,7 @@ export default function ProductDetail() {
                         <View style={styles.sellerDetailsContainer}>
                             <Text style={styles.sellerName}>{seller.full_name}</Text>
                             <Text style={styles.sellerMeta}>
-                                Joined: {new Date(seller.created_datetime).toLocaleString('default', { month: 'short', year: 'numeric' })} | Rating: {seller.rating?.toFixed(1) || 'N/A'}
+                                Joined: {new Date(seller.created_datetime).toLocaleString('default', { month: 'short', year: 'numeric' })}
                             </Text>
                             <Text style={styles.sellerMeta}>{seller.location}</Text>
                         </View>
@@ -235,7 +280,7 @@ export default function ProductDetail() {
                         <Ionicons name="close" size={32} color="#fff" />
                     </TouchableOpacity>
 
-                    {product.images.length > 1 && (
+                    {images.length > 1 && (
                         <>
                             <TouchableOpacity
                                 onPress={goPrev}
@@ -259,7 +304,7 @@ export default function ProductDetail() {
                     )}
 
                     <Image
-                        source={{ uri: product.images[imageIndex] }}
+                        source={{ uri: images[imageIndex] }}
                         style={styles.fullscreenImage}
                         resizeMode="contain"
                         accessibilityLabel={`Fullscreen image ${imageIndex + 1} of ${product.title}`}
