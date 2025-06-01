@@ -1,18 +1,23 @@
 const BASE_URL =
   process.env.FLASK_API_URL ||
-  "https://backend-api-729553473022.us-central1.run.app/v1/";
+  "https://backend-api-729553473022.us-central1.run.app/v1";
 
 export interface CreateUserPayload {
   username: string;
   email: string;
   password: string;
+  full_name?: string;
+  user_location?: string;
 }
 
 export interface User {
   username: string;
   email: string;
+  full_name?: string;
+  user_location?: string;
+  favorite_listings?: number[]; 
   created_datetime?: string;
-  favorite_listings?: string[];
+  updated_datetime?: string;
 }
 
 export async function createUser(payload: CreateUserPayload): Promise<User> {

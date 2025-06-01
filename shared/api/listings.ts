@@ -1,6 +1,9 @@
+import { ListingImage } from './images';
+import { Tag } from './tags';
+
 const BASE_URL =
   process.env.FLASK_API_URL ||
-  "https://backend-api-729553473022.us-central1.run.app/v1/";
+  "https://backend-api-729553473022.us-central1.run.app/v1";
 
 // Interfaces
 export interface Listing {
@@ -10,11 +13,15 @@ export interface Listing {
   price: number;
   seller: string;
   location?: string;
-  category?: string;
-  condition?: string;
-  tags?: string[];
-  images?: string[];
+  //category?: string;         // not in DB, tags? remove this?
+  item_condition?: string;
+  is_sold?: boolean;
+  active_status?: string;
+  expiration_datetime?: string;
   created_datetime?: string;
+  updated_datetime?: string;
+  tags?: Tag[];
+  images?: ListingImage[]; 
 }
 
 export interface PaginationMeta {
@@ -58,12 +65,12 @@ export async function getListingById(listingId: string): Promise<Listing> {
     throw new Error(err.error || "Failed to fetch listing");
   }
 
-  return res.json();
+  return await res.json();
 }
 
 // POST /Listings
 export async function createListing(
-  listing: Omit<Listing, "id" | "created_datetime">
+  listing: Omit<Listing, "id" | "created_datetime" | "updated_datetime" >
 ): Promise<Listing> {
   const options: RequestInit = {
     method: "POST",

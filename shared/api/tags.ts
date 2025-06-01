@@ -8,6 +8,20 @@ export interface Tag {
   created_datetime: string;
 }
 
+export async function getTags(): Promise<Tag[]> {
+  try {
+    const res = await fetch(`${BASE_URL}/Tags`);
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || "Failed to fetch tags");
+    }
+    return await res.json();
+  } catch (error) {
+    console.error("getTags error:", error);
+    throw error;
+  }
+}
+
 export async function createTag(name: string): Promise<Tag> {
   const body = JSON.stringify({ name });
 

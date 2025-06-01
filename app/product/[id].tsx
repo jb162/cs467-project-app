@@ -1,14 +1,15 @@
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { View, Text, Image, StyleSheet, ScrollView, Platform,
-    TouchableOpacity, Modal, Dimensions } from 'react-native';
-import { useLayoutEffect, useState } from 'react';
+    TouchableOpacity, Modal, Dimensions, ActivityIndicator } from 'react-native';
+import { useLayoutEffect, useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import * as Linking from 'expo-linking';
-import { products } from '../shared/mockProducts';
-import { users } from '../shared/mockSellers';
 import fallbackImage from '../../assets/images/fallback.png';
+import { getListingById, Listing } from '@/shared/api/listings';
 import { getUser, updateFavoriteListings } from '@/shared/api/users';
+import { getListingImages, ListingImage } from '@/shared/api/images';
+import Toast from 'react-native-toast-message';
 
 
 const screenWidth = Dimensions.get('window').width;
@@ -16,15 +17,91 @@ const screenWidth = Dimensions.get('window').width;
 export default function ProductDetail() {
     const navigation = useNavigation();
     const router = useRouter();
-    const { id } = useLocalSearchParams();
-    const productId = parseInt(id as string, 10);
-    const product = products.find((p) => p.id === productId);
+    const { id: productId } = useLocalSearchParams();
+    const id = Array.isArray(productId) ? productId[0] : productId;
+    const [product, setProduct] = useState<Listing | null>(null);
+    const [seller, setSeller] = useState<any | null>(null);
+    const [listingImages, setListingImages] = useState<ListingImage[]>([]);
     const [fullscreen, setFullscreen] = useState(false);
     const [imageIndex, setImageIndex] = useState(0);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    const handleShare = () => {
-        console.log('handleShare() called');
+     const handleShare = async () => {
+        try {
+            const url = Linking.createURL(`/products/${productId}`);
+            await Clipboard.setStringAsync(url);
+
+            Toast.show({
+                type: 'success',
+                text1: 'Link copied!',
+                text2: 'Paste it anywhere to share.',
+            });
+        } catch (error) {
+            console.error('Clipboard error:', error);
+            Toast.show({
+                type: 'error',
+                text1: 'Failed to copy link',
+            });
+        }
     };
+
+
+    const handleFavorite = async () => {
+        try {
+            const username = 'ikeafan'; // Replace with actual logged-in user
+
+            const user = await getUser(username);
+            const favorites: string[] = (user.favorite_listings || []).map(String);
+
+            const alreadyFavorited = favorites.includes(productId.toString());
+            const updatedFavorites = alreadyFavorited
+                ? favorites.filter((id) => id !== productId.toString())
+                : [...favorites, productId.toString()];
+
+            await updateFavoriteListings(username, updatedFavorites);
+
+            Toast.show({
+                type: 'success',
+                text1: alreadyFavorited ? 'Removed from favorites' : 'Added to favorites',
+            });
+        } catch (err) {
+            Toast.show({ type: 'error', text1: 'Could not update favorites' });
+            console.error(err);
+        }
+    };
+
+    // Fetch product by id
+    useEffect(() => {
+        if (!productId || typeof productId !== 'string') {
+            setError('Invalid product ID');
+            setLoading(false);
+            return;
+        }
+
+        async function fetchProductAndImages() {
+            try {
+            setLoading(true);
+            const fetchedProduct = await getListingById(id);
+            setProduct(fetchedProduct);
+
+            if (fetchedProduct.seller) {
+                const fetchedSeller = await getUser(fetchedProduct.seller);
+                setSeller(fetchedSeller);
+            }
+
+            // Fetch listing images separately
+            const images = await getListingImages(Number(id));
+            setListingImages(images);
+            } catch (err: any) {
+            setError(err.message || 'Failed to load product');
+            } finally {
+            setLoading(false);
+            }
+        }
+
+        fetchProductAndImages();
+        }, [productId]);
 
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -61,72 +138,44 @@ export default function ProductDetail() {
                 </View>
             ),
         });
-    }, [navigation]);
+    }, [navigation, productId, product]);
 
-    if (!product || !product.images || product.images.length === 0) {
+    if (loading) {
         return (
-            <View style={styles.center}>
-                <Text>Product not found.</Text>
-            </View>
+        <View style={styles.center}>
+            <ActivityIndicator size="large" color="#1e88e5" />
+        </View>
         );
     }
 
-    const handleShare = async () => {
-        try {
-            const url = Linking.createURL(`/products/${productId}`);
-            await Clipboard.setStringAsync(url);
+    if (error || !product) {
+        return (
+        <View style={styles.center}>
+            <Text>{error || 'Product not found.'}</Text>
+        </View>
+        );
+    }
 
-            Toast.show({
-                type: 'success',
-                text1: 'Link copied!',
-                text2: 'Paste it anywhere to share.',
-            });
-        } catch (error) {
-            console.error('Clipboard error:', error);
-            Toast.show({
-                type: 'error',
-                text1: 'Failed to copy link',
-            });
-        }
-    };
+    const images = listingImages.length > 0 ? listingImages.map(img => img.url) : [];
 
-
-    const handleFavorite = async () => {
-        try {
-            const username = 'justin'; // Replace with actual logged-in user
-
-            const user = await getUser(username);
-            const favorites = user.favorite_listings || [];
-
-            const alreadyFavorited = favorites.includes(productId.toString());
-            const updatedFavorites = alreadyFavorited
-                ? favorites.filter((id: string) => id !== productId.toString())
-                : [...favorites, productId.toString()];
-
-            await updateFavoriteListings(username, updatedFavorites);
-
-            Toast.show({
-                type: 'success',
-                text1: alreadyFavorited ? 'Removed from favorites' : 'Added to favorites',
-            });
-        } catch (err) {
-            Toast.show({ type: 'error', text1: 'Could not update favorites' });
-            console.error(err);
+    const handleSellerInfo = () => {
+        if (seller) {
+            router.push(`/user/${seller.username}`);
         }
     };
 
     const goPrev = () => {
-        setImageIndex((prev) => (prev - 1 + product.images.length) % product.images.length);
+        setImageIndex((prev) => (prev - 1 + images.length) % images.length);
     };
 
     const goNext = () => {
-        setImageIndex((prev) => (prev + 1) % product.images.length);
+        setImageIndex((prev) => (prev + 1) % images.length);
     };
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
             <View style={styles.carouselWrapper} accessible>
-                {product.images.length > 1 && (
+                {images.length > 1 && (
                     <TouchableOpacity
                         onPress={goPrev}
                         style={styles.carouselArrowLeft}
@@ -143,13 +192,13 @@ export default function ProductDetail() {
                     accessibilityRole="button"
                 >
                     <Image
-                        source={{ uri: product.images[imageIndex] }}
+                        source={{ uri: images[imageIndex] }}
                         style={styles.image}
                         defaultSource={fallbackImage}
                         accessibilityLabel={`Image ${imageIndex + 1} of ${product.title}`}
                     />
                 </TouchableOpacity>
-                {product.images.length > 1 && (
+                {images.length > 1 && (
                     <TouchableOpacity
                         onPress={goNext}
                         style={styles.carouselArrowRight}
@@ -162,9 +211,9 @@ export default function ProductDetail() {
                 )}
             </View>
 
-            {product.images.length > 1 && (
+            {images.length > 1 && (
                 <View style={styles.dotsContainer} accessible accessibilityLabel="Image carousel dots">
-                    {product.images.map((_, i) => (
+                    {images.map((_, i) => (
                         <View
                             key={i}
                             style={[styles.dot, i === imageIndex && styles.activeDot]}
@@ -180,13 +229,15 @@ export default function ProductDetail() {
             <Text style={styles.text}>{product.description}</Text>
 
             <Text style={styles.label}>Details</Text>
+            {/* Commenting out, Category not in DB. Can update to Tags.
             <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Category:</Text>
                 <Text style={styles.detailText}>{product.category}</Text>
             </View>
+            */}
             <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Condition:</Text>
-                <Text style={styles.detailText}>{product.condition}</Text>
+                <Text style={styles.detailText}>{product.item_condition}</Text>
             </View>
             <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Location:</Text>
@@ -199,14 +250,14 @@ export default function ProductDetail() {
                     <View style={styles.sellerInfoRow}>
                         <Image source={{ uri: seller.image }} style={styles.sellerImage} defaultSource={fallbackImage} accessibilityLabel={`Image of ${seller.name}`} />
                         <View style={styles.sellerDetailsContainer}>
-                            <Text style={styles.sellerName}>{seller.name}</Text>
+                            <Text style={styles.sellerName}>{seller.full_name}</Text>
                             <Text style={styles.sellerMeta}>
-                                Joined: {new Date(seller.createdDatetime).toLocaleString('default', { month: 'short', year: 'numeric' })} | Rating: {seller.rating?.toFixed(1) || 'N/A'}
+                                Joined: {new Date(seller.created_datetime).toLocaleString('default', { month: 'short', year: 'numeric' })}
                             </Text>
                             <Text style={styles.sellerMeta}>{seller.location}</Text>
                         </View>
                         <TouchableOpacity
-                            onPress={() => router.push(`/messages/new?sellerId=${seller.id}`)}
+                            onPress={() => router.push(`/messages/new?sellerId=${seller.username}`)}
                             accessibilityLabel="Message seller"
                             accessibilityRole="button"
                             style={styles.chatButton}
@@ -231,7 +282,7 @@ export default function ProductDetail() {
                         <Ionicons name="close" size={32} color="#fff" />
                     </TouchableOpacity>
 
-                    {product.images.length > 1 && (
+                    {images.length > 1 && (
                         <>
                             <TouchableOpacity
                                 onPress={goPrev}
@@ -255,7 +306,7 @@ export default function ProductDetail() {
                     )}
 
                     <Image
-                        source={{ uri: product.images[imageIndex] }}
+                        source={{ uri: images[imageIndex] }}
                         style={styles.fullscreenImage}
                         resizeMode="contain"
                         accessibilityLabel={`Fullscreen image ${imageIndex + 1} of ${product.title}`}

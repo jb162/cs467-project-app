@@ -1,21 +1,53 @@
-import { StyleSheet, SafeAreaView, View, TouchableOpacity, Text, TextInput, FlatList, Image, RefreshControl } from 'react-native';
+import { StyleSheet, SafeAreaView, View, TouchableOpacity, Text, TextInput, 
+  FlatList, Image, RefreshControl, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ProductCard from '../ProductCard';
-import { products } from '../shared/mockProducts';
+import { getListings, Listing } from '../../shared/api/listings';
+import { getListingImages, ListingImage } from '../../shared/api/images';
 import FilterComponent from '../filter';
 import { COLORS } from '../shared/colors';
 
 export default function Index() {
   const router = useRouter();
   const [inputTerm, setInputTerm] = useState('');
-  const [filteredProducts, setFilteredProducts] = useState(products);
+  const [allProducts, setAllProducts] = useState<Listing[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Listing[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
   const [selectedSort, setSelectedSort] = useState('newest');
+  const [loading, setLoading] = useState(false);
 
-  const updateProductList = (searchTerm: string, sortBy: string) => {
+  // Fetch data from backend
+  const fetchListingsWithImages = async () => {
+    try {
+      setLoading(true);
+      const data = await getListings();
+
+      // For each listing, fetch images asynchronously
+      const listingsWithImages = await Promise.all(
+        data.listings.map(async (listing) => {
+          const images: ListingImage[] = await getListingImages(Number(listing.id));
+          return { ...listing, images };
+        })
+      );
+
+      setAllProducts(listingsWithImages);
+      updateProductList(listingsWithImages, inputTerm, selectedSort);
+    } catch (err) {
+      console.error("Failed to fetch listings or images:", err);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchListingsWithImages();
+  }, []);
+
+  const updateProductList = (products: Listing[], searchTerm: string, sortBy: string) => {
     const term = searchTerm.toLowerCase();
 
     let updated = products.filter(product =>
@@ -24,24 +56,20 @@ export default function Index() {
 
     switch (sortBy) {
       case 'newest':
-        updated = updated.sort(
-          (a, b) =>
-            new Date(b.createdDatetime).getTime() -
-            new Date(a.createdDatetime).getTime()
+        updated.sort((a, b) =>
+          new Date(b.created_datetime!).getTime() - new Date(a.created_datetime!).getTime()
         );
         break;
       case 'oldest':
-        updated = updated.sort(
-          (a, b) =>
-            new Date(a.createdDatetime).getTime() -
-            new Date(b.createdDatetime).getTime()
+        updated.sort((a, b) =>
+          new Date(a.created_datetime!).getTime() - new Date(b.created_datetime!).getTime()
         );
         break;
       case 'lowToHigh':
-        updated = updated.sort((a, b) => a.price - b.price);
+        updated.sort((a, b) => a.price - b.price);
         break;
       case 'highToLow':
-        updated = updated.sort((a, b) => b.price - a.price);
+        updated.sort((a, b) => b.price - a.price);
         break;
     }
 
@@ -49,20 +77,21 @@ export default function Index() {
   };
 
   const handleSearch = () => {
-    updateProductList(inputTerm, selectedSort);
+    updateProductList(allProducts, inputTerm, selectedSort);
   };
 
   const handleSort = (sortBy: string) => {
     setSelectedSort(sortBy);
-    updateProductList(inputTerm, sortBy);
+    updateProductList(allProducts, inputTerm, sortBy);
   }
 
   const handleRefresh = () => {
     setRefreshing(true);
+    fetchListingsWithImages();
     setTimeout(() => {
       setInputTerm('');
       setSelectedSort('newest')
-      updateProductList('', 'newest')
+      updateProductList(allProducts, '', 'newest')
       setRefreshing(false);
     }, 1000);
   };
@@ -93,7 +122,7 @@ export default function Index() {
               value={inputTerm}
               onChangeText={(text) => {
                 setInputTerm(text);
-                updateProductList(text, selectedSort);
+                updateProductList(allProducts, text, selectedSort);
               }}
               onSubmitEditing={handleSearch}
               returnKeyType="search"

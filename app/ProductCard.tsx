@@ -1,8 +1,9 @@
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import { ListingImage } from '../shared/api/images';
 
 type Product = {
-  id: number;
-  images: string[];
+  id: string;
+  images?: ListingImage[];
   title: string;
   price: number;
 };
@@ -23,7 +24,7 @@ export default function ProductCard({ product, onPress }: ProductCardProps) {
             style={styles.cardImage}
             source={{
               uri: product.images && product.images.length > 0
-                ? product.images[0]
+                ? product.images[0].url
                 : "https://placehold.co/160"
             }}
             defaultSource={{ uri: "https://placehold.co/160" } /* placeholder image */}
