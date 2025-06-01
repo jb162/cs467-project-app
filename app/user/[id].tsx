@@ -107,11 +107,11 @@ export default function SellerProfile() {
         <Image
           source={{ uri: seller.image || 'https://via.placeholder.com/120' }}
           style={styles.image}
-          accessibilityLabel={`Image of ${seller.username}`}
+          accessibilityLabel={`Image of ${seller.full_name}`}
           accessibilityRole="image"
         />*/}
         <View style={styles.profileInfo}>
-          <Text style={styles.name}>{seller.username}</Text>
+          <Text style={styles.name}>{seller.full_name}</Text>
           <Text style={styles.text}>{seller.email}</Text>
           <Text style={styles.joinedDate}>
             Joined:{' '}
@@ -134,7 +134,7 @@ export default function SellerProfile() {
         <Text style={styles.messageButtonText}>Send Message</Text>
       </TouchableOpacity>
 
-      <Text style={styles.label}>{seller.username}'s Listings</Text>
+      <Text style={styles.label}>{seller.full_name}'s Listings</Text>
 
       <FlatList
         contentContainerStyle={styles.productsList}
@@ -256,7 +256,8 @@ const styles = StyleSheet.create({
     },
     productPrice: {
         fontSize: 14,
-        color: '#1e88e5',
+        fontWeight: '500',
+        color: '#ad5ff5',
         marginBottom: 8,
         marginLeft: 8,
     },

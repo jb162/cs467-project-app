@@ -371,7 +371,7 @@ const styles = StyleSheet.create({
         marginHorizontal: 4,
     },
     activeDot: {
-        backgroundColor: '#1e88e5',
+        backgroundColor: '#ad5ff5',
     },
     image: {
         width: screenWidth * 0.85,
@@ -422,7 +422,7 @@ const styles = StyleSheet.create({
     price: {
         fontSize: 22,
         fontWeight: '500',
-        color: '#1e88e5',
+        color: '#ad5ff5',
         marginBottom: 12,
     },
     label: {
