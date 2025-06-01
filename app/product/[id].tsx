@@ -5,7 +5,6 @@ import { useLayoutEffect, useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import * as Linking from 'expo-linking';
-import { products } from '../shared/mockProducts';
 import fallbackImage from '../../assets/images/fallback.png';
 import { getListingById, Listing } from '@/shared/api/listings';
 import { getUser, updateFavoriteListings } from '@/shared/api/users';
