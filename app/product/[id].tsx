@@ -21,6 +21,7 @@ export default function ProductDetail() {
     const id = Array.isArray(productId) ? productId[0] : productId;
     const [product, setProduct] = useState<Listing | null>(null);
     const [seller, setSeller] = useState<any | null>(null);
+    const [listingImages, setListingImages] = useState<ListingImage[]>([]);
     const [fullscreen, setFullscreen] = useState(false);
     const [imageIndex, setImageIndex] = useState(0);
     const [loading, setLoading] = useState(true);
@@ -73,31 +74,34 @@ export default function ProductDetail() {
     // Fetch product by id
     useEffect(() => {
         if (!productId || typeof productId !== 'string') {
-        setError('Invalid product ID');
-        setLoading(false);
-        return;
+            setError('Invalid product ID');
+            setLoading(false);
+            return;
         }
 
-        async function fetchProduct() {
-        try {
+        async function fetchProductAndImages() {
+            try {
             setLoading(true);
             const fetchedProduct = await getListingById(id);
             setProduct(fetchedProduct);
 
-            // Fetch seller info using fetchedProduct.seller (assumed username)
             if (fetchedProduct.seller) {
-            const fetchedSeller = await getUser(fetchedProduct.seller);
-            setSeller(fetchedSeller);
+                const fetchedSeller = await getUser(fetchedProduct.seller);
+                setSeller(fetchedSeller);
             }
-        } catch (err: any) {
+
+            // Fetch listing images separately
+            const images = await getListingImages(Number(id));
+            setListingImages(images);
+            } catch (err: any) {
             setError(err.message || 'Failed to load product');
-        } finally {
+            } finally {
             setLoading(false);
-        }
+            }
         }
 
-        fetchProduct();
-    }, [productId]);
+        fetchProductAndImages();
+        }, [productId]);
 
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -152,8 +156,7 @@ export default function ProductDetail() {
         );
     }
 
-    // load images later
-    const images = product.images?.map(img => typeof img === 'string' ? img : img.url) || [];
+    const images = listingImages.length > 0 ? listingImages.map(img => img.url) : [];
 
     const handleSellerInfo = () => {
         if (seller) {
