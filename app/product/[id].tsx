@@ -6,7 +6,6 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import * as Linking from 'expo-linking';
 import { products } from '../shared/mockProducts';
-import { users } from '../shared/mockSellers';
 import fallbackImage from '../../assets/images/fallback.png';
 import { getUser, updateFavoriteListings } from '@/shared/api/users';
 import Toast from 'react-native-toast-message';
@@ -91,7 +90,7 @@ export default function ProductDetail() {
 
     const handleFavorite = async () => {
         try {
-            const username = 'justin'; // Replace with actual logged-in user
+            const username = 'ikeafan'; // Replace with actual logged-in user
 
             const user = await getUser(username);
             const favorites: string[] = (user.favorite_listings || []).map(String);
