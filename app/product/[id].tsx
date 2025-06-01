@@ -8,6 +8,7 @@ import * as Linking from 'expo-linking';
 import { products } from '../shared/mockProducts';
 import fallbackImage from '../../assets/images/fallback.png';
 import { getUser, updateFavoriteListings } from '@/shared/api/users';
+import { getListingImages, ListingImage } from '@/shared/api/images';
 import Toast from 'react-native-toast-message';
 
 
