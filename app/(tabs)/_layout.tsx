@@ -7,8 +7,8 @@ export default function TabLayout() {
             <Tabs.Screen
                 name="index"
                 options={{
-                    headerShown: false,
                     title: 'Home',
+                    headerShown: false,
                     tabBarIcon: ({ color, focused }) => (
                         <Ionicons name={focused ? 'home-sharp' : 'home-outline'} color={color} size={24} />
                     ),
@@ -26,7 +26,9 @@ export default function TabLayout() {
             <Tabs.Screen
                 name="post"
                 options={{
-                    title: 'Post',
+                    headerTitleAlign: 'center',
+                    headerTitle: 'Create Post',
+                    tabBarLabel: 'Post',
                     tabBarIcon: ({ color, focused }) => (
                         <Ionicons name={focused ? 'add-circle-sharp' : 'add-circle-outline'} color={color} size={24} />
                     ),
@@ -36,6 +38,7 @@ export default function TabLayout() {
                 name="account"
                 options={{
                     title: 'Account',
+                    headerShown: false,
                     tabBarIcon: ({ color, focused }) => (
                         <Ionicons name={focused ? 'person-sharp' : 'person-outline'} color={color} size={24} />
                     ),

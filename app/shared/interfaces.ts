@@ -20,15 +20,24 @@ export interface ProductListing {
 }
 
 export interface User {
+  id: number;
   username: string;
-  email: string | null;
+  email: string;
   passwordHash: string;
   createdDatetime: string;
   updatedDatetime: string;
 
   // new attributes
   image: string;
-  name?: string;
+  name: string;
   rating?: number;
   location?: string;
+}
+
+export interface Message {
+  id: number;
+  sender: string;
+  recipient: string;
+  message_body: string;
+  sent_datetime: string;
 }

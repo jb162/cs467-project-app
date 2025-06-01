@@ -21,7 +21,11 @@ export default function ProductCard({ product, onPress }: ProductCardProps) {
             alt="Product picture on white background."
             resizeMode="cover"
             style={styles.cardImage}
-            source={{ uri: product.images[0] }}
+            source={{
+              uri: product.images && product.images.length > 0
+                ? product.images[0]
+                : "https://placehold.co/160"
+            }}
             defaultSource={{ uri: "https://placehold.co/160" } /* placeholder image */}
           />
         </View>
