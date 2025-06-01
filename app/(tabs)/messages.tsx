@@ -7,10 +7,11 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { getUser, User } from '../../shared/api/users'; 
 
-const CURRENT_USER = 'test_user_1'; // Update to current user later
+const CURRENT_USER = 'ikeafan'; // Update to current user later
 
 type Thread = {
   id: string;
+  username: string;
   name: string;
   message: string;
   date: string;
@@ -21,7 +22,7 @@ type Thread = {
 type BackendMessage = {
   id: number;
   sender: string;
-  recipient: string;
+  receiver: string;
   message_body: string;
   sent_datetime: string;
 };
@@ -40,16 +41,17 @@ export default function MessagesScreen() {
         const response = await fetch(
           `https://backend-api-729553473022.us-central1.run.app/v1/Messages?user=${CURRENT_USER}`
         );
-        const data: BackendMessage[] = await response.json();
+        const { messages } = await response.json();
+        const data: BackendMessage[] = messages;
 
         const userMessages = data.filter(
-          (msg) => msg.sender === CURRENT_USER || msg.recipient === CURRENT_USER
+          (msg) => msg.sender === CURRENT_USER || msg.receiver === CURRENT_USER
         );
 
         const otherUsernamesSet = new Set<string>();
         userMessages.forEach((msg) => {
           if (msg.sender !== CURRENT_USER) otherUsernamesSet.add(msg.sender);
-          if (msg.recipient !== CURRENT_USER) otherUsernamesSet.add(msg.recipient);
+          if (msg.receiver !== CURRENT_USER) otherUsernamesSet.add(msg.receiver);
         });
         const otherUsernames = Array.from(otherUsernamesSet);
 
@@ -66,10 +68,10 @@ export default function MessagesScreen() {
         const groupedThreads: { [key: string]: Thread } = {};
 
         userMessages.forEach((msg) => {
-          const key = [msg.sender, msg.recipient].sort().join('-');
-          const otherUser = msg.sender === CURRENT_USER ? msg.recipient : msg.sender;
+          const key = [msg.sender, msg.receiver].sort().join('-');
+          const otherUser = msg.sender === CURRENT_USER ? msg.receiver : msg.sender;
           const otherUserDetails = usersMap.get(otherUser);
-          const userName = otherUserDetails?.username || otherUser;
+          const userName = otherUserDetails?.full_name || otherUserDetails?.username || otherUser;
           // Add image to interface later
           const image = undefined;
 
@@ -80,6 +82,7 @@ export default function MessagesScreen() {
           ) {
             groupedThreads[key] = {
               id: key,
+              username: otherUser,
               name: userName,
               message: msg.message_body,
               date: msg.sent_datetime,
@@ -150,7 +153,7 @@ export default function MessagesScreen() {
   };
 
   const renderItem = ({ item }: { item: Thread }) => {
-    const otherUser = item.id.split('-').find((u) => u !== CURRENT_USER) || 'unknown';
+    const otherUser = item.username || 'unknown';
 
     return (
       <TouchableOpacity

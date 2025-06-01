@@ -1,6 +1,6 @@
 const BASE_URL =
   process.env.FLASK_API_URL ||
-  "https://backend-api-729553473022.us-central1.run.app/v1/";
+  "https://backend-api-729553473022.us-central1.run.app/v1";
 
 export interface Message {
   id: string;
