@@ -82,7 +82,7 @@ export default function PostScreen() {
                         <TextInput
                             accessibilityLabel="Description"
                             accessibilityRole="text"
-                            style={[styles.inputControl, {height: 50}]}
+                            style={[styles.inputControl, { height: 50, textAlignVertical: 'center', paddingVertical: 16 }]}
                             placeholder="Enter description"
                             value={form.description}
                             multiline
