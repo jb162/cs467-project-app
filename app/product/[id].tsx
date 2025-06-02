@@ -263,17 +263,17 @@ export default function ProductDetail() {
                                 const CURRENT_USER = 'ikeafan'; // Replace with actual auth user if needed
 
                                 try {
-                                const encodedName = encodeURIComponent(seller.full_name);
-                                router.push(`/messages/${seller.username}?name=${encodedName}`);
+                                    const encodedName = encodeURIComponent(seller.full_name);
+                                    router.push(`/messages/${seller.username}?name=${encodedName}`);
                                 } catch (err) {
-                                console.error('Failed to navigate to messages:', err);
-                                Toast.show({ type: 'error', text1: 'Unable to open chat' });
+                                    console.error('Failed to navigate to messages:', err);
+                                    Toast.show({ type: 'error', text1: 'Unable to open chat' });
                                 }
                             }}
                             accessibilityLabel="Message seller"
                             accessibilityRole="button"
                             style={styles.chatButton}
-                            >
+                        >
                             <Ionicons name="chatbox-ellipses" size={28} color="#ad5ff5" />
                         </TouchableOpacity>
                     </View>

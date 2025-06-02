@@ -75,12 +75,14 @@ export default function SellerProfile() {
     fetchData();
   }, [sellerUsername]);
 
-  const handleMessagePress = async () => {
+  const handleMessagePress = () => {
+    if (!seller || !seller.full_name) return;
+
     try {
-      await getMessagesBetweenUsers(CURRENT_USER, sellerUsername);
-      router.push(`/messages/${sellerUsername}`);
+      const encodedName = encodeURIComponent(seller.full_name);
+      router.push(`/messages/${seller.username}?name=${encodedName}`);
     } catch (error) {
-      console.error('Error checking or creating message thread:', error);
+      console.error('Error navigating to message screen:', error);
     }
   };
 
