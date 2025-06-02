@@ -16,14 +16,16 @@ export interface UserProfileImageResponse {
 
 export async function fetchUserProfileImage(username: string): Promise<UserProfileImageResponse> {
   try {
-    const response = await fetch(`${BASE_URL}/Users/${encodeURIComponent(username)}/profile-image`);
+    const response = await fetch(`${BASE_URL}/Users/${encodeURIComponent(username)}`);
     if (!response.ok) {
-      throw new Error(`Error fetching profile image: ${response.statusText}`);
+      throw new Error(`Error fetching user profile: ${response.statusText}`);
     }
-    const data: UserProfileImageResponse = await response.json();
-    return data;
+    const data = await response.json();
+    const profileImageUrl = data.profile_image_url || null;
+    console.log(`Fetched profile image URL for ${username}:`, profileImageUrl);
+    return { url: profileImageUrl };
   } catch (error) {
-    console.error(error);
+    console.error(`fetchUserProfileImage error for ${username}:`, error);
     return { url: null };
   }
 }
@@ -50,6 +52,8 @@ export async function getListingImages(
     }
 
     const data = await res.json();
+    const imageUrls = data.images.map((img: ListingImage) => img.url);
+    console.log(`Fetched image URLs for listing ${listingId}:`, imageUrls);
     return data.images;
   } catch (error) {
     console.error("getListingImages error:", error);

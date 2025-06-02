@@ -98,11 +98,13 @@ export default function ProductDetail() {
 
                 // Fetch seller profile image
                 const profileImageResponse = await fetchUserProfileImage(fetchedSeller.username);
+                console.log('Seller profile image URL:', profileImageResponse.url);
                 setSellerProfileImageUrl(profileImageResponse.url);
             }
 
             // Fetch listing images separately
             const images = await getListingImages(Number(id));
+            console.log('Listing image URLs:', images.map(img => img.url));
             setListingImages(images);
             } catch (err: any) {
             setError(err.message || 'Failed to load product');
