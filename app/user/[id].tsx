@@ -7,6 +7,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { getUser, User } from '../../shared/api/users';
 import { getListings, Listing } from '../../shared/api/listings';
 import { getMessagesBetweenUsers } from '../../shared/api/messages';
+import { fetchUserProfileImage } from '../../shared/api/images';
 import { getListingImages } from '../../shared/api/images';
 
 const CURRENT_USER = 'ikeafan'; // Update this later with API
@@ -18,6 +19,7 @@ export default function SellerProfile() {
   const sellerUsername = id as string;
 
   const [seller, setSeller] = useState<User | null>(null);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
   const [listings, setListings] = useState<Listing[]>([]);
   const [listingImages, setListingImages] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
@@ -49,6 +51,15 @@ export default function SellerProfile() {
         setSeller(fetchedSeller);
         const filtered = allListings.listings.filter((l) => l.seller === sellerUsername);
         setListings(filtered);
+
+        if (fetchedSeller) {
+          try {
+            const { url } = await fetchUserProfileImage(fetchedSeller.username);
+            setProfileImage(url);
+          } catch (error) {
+            console.warn('Could not load profile image for user:', fetchedSeller.username);
+          }
+        }
 
         const imageMap: Record<number, string> = {};
         await Promise.all(
@@ -105,13 +116,12 @@ export default function SellerProfile() {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.profileHeader}>
-        {/* Seller images will need to be added to the image or user API 
         <Image
-          source={{ uri: seller.image || 'https://via.placeholder.com/120' }}
+          source={{ uri: profileImage ?? 'https://via.placeholder.com/120' }}
           style={styles.image}
           accessibilityLabel={`Image of ${seller.full_name}`}
           accessibilityRole="image"
-        />*/}
+        />
         <View style={styles.profileInfo}>
           <Text style={styles.name}>{seller.full_name}</Text>
           <Text style={styles.text}>{seller.email}</Text>
