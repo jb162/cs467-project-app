@@ -19,6 +19,7 @@ export default function MessageThreadScreen() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const inputRef = useRef<TextInput>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   useEffect(() => {
     if (name) {
@@ -144,7 +145,6 @@ export default function MessageThreadScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#25292e',
   },
   messagesContainer: {
     flex: 1,
@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   timestamp: {
-    color: '#bbb',
+    color: '#aaa',
     fontSize: 12,
     marginTop: 4,
   },
@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
   },
   senderName: {
     fontSize: 14,
-    color: '#aaa',
+    color: '#000',
     marginBottom: 4,
     textAlign: 'left',
   },

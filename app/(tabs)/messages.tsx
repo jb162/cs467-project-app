@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'expo-router';
+import { useRouter, withLayoutContext } from 'expo-router';
 import {
   View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet, Image,
   TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform, 
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { getUser, User } from '../../shared/api/users'; 
+import { fetchUserProfileImage } from '@/shared/api/images';
+import { COLORS } from '../shared/colors';
 
 const CURRENT_USER = 'ikeafan'; // Update to current user later
 
@@ -30,9 +32,6 @@ type BackendMessage = {
 export default function MessagesScreen() {
   const [threads, setThreads] = useState<Thread[]>([]);
   const [messageSearch, setMessageSearch] = useState('');
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedThread, setSelectedThread] = useState<Thread | null>(null);
-  const [renameInput, setRenameInput] = useState('');
   const router = useRouter();
 
   useEffect(() => {
@@ -55,6 +54,7 @@ export default function MessagesScreen() {
         });
         const otherUsernames = Array.from(otherUsernamesSet);
 
+        // Fetch user data
         const userPromises = otherUsernames.map((username) =>
           getUser(username).catch(() => null)
         );
@@ -65,17 +65,14 @@ export default function MessagesScreen() {
           if (user) usersMap.set(user.username, user);
         });
 
+        // Build threads without images first
         const groupedThreads: { [key: string]: Thread } = {};
-
         userMessages.forEach((msg) => {
           const key = [msg.sender, msg.receiver].sort().join('-');
           const otherUser = msg.sender === CURRENT_USER ? msg.receiver : msg.sender;
           const otherUserDetails = usersMap.get(otherUser);
           const userName = otherUserDetails?.full_name || otherUserDetails?.username || otherUser;
-          // Add image to interface later
-          const image = undefined;
 
-          // Show most recent message per thread
           if (
             !groupedThreads[key] ||
             new Date(msg.sent_datetime) > new Date(groupedThreads[key].date)
@@ -87,9 +84,30 @@ export default function MessagesScreen() {
               message: msg.message_body,
               date: msg.sent_datetime,
               pinned: false,
-              image,
+              image: undefined, // placeholder, will set below
             };
           }
+        });
+
+        // Fetch images for each thread user in parallel
+        const threadUsers = Object.values(groupedThreads).map((thread) => thread.username);
+        // Fetch images for each thread user in parallel
+        const imagePromises = threadUsers.map(async (username) => {
+          try {
+            const imageData = await fetchUserProfileImage(username);
+            console.log(`Fetched image URL for ${username}:`, imageData.url);
+            return imageData;
+          } catch {
+            console.log(`Failed to fetch image for ${username}`);
+            return { url: undefined };
+          }
+        });
+        const images = await Promise.all(imagePromises);
+
+        // Assign fetched images to threads
+        Object.values(groupedThreads).forEach((thread, idx) => {
+          const imageUrl = images[idx].url;
+          thread.image = imageUrl || undefined;
         });
 
         setThreads(Object.values(groupedThreads));
@@ -115,41 +133,10 @@ export default function MessagesScreen() {
         : 1
     );
 
-  const openModal = (thread: Thread) => {
-    setSelectedThread(thread);
-    setRenameInput(thread.name);
-    setModalVisible(true);
-  };
-
-  const closeModal = () => {
-    setModalVisible(false);
-    setSelectedThread(null);
-    setRenameInput('');
-  };
-
-  const handleRename = () => {
-    if (selectedThread) {
-      setThreads((prev) =>
-        prev.map((t) => (t.id === selectedThread.id ? { ...t, name: renameInput } : t))
-      );
-      closeModal();
-    }
-  };
-
-  const handleTogglePin = () => {
-    if (selectedThread) {
-      setThreads((prev) =>
-        prev.map((t) => (t.id === selectedThread.id ? { ...t, pinned: !t.pinned } : t))
-      );
-      closeModal();
-    }
-  };
-
-  const handleDelete = () => {
-    if (selectedThread) {
-      setThreads((prev) => prev.filter((t) => t.id !== selectedThread.id));
-      closeModal();
-    }
+  const togglePin = (threadId: string) => {
+    setThreads((prev) =>
+      prev.map((t) => (t.id === threadId ? { ...t, pinned: !t.pinned } : t))
+    );
   };
 
   const renderItem = ({ item }: { item: Thread }) => {
@@ -187,7 +174,8 @@ export default function MessagesScreen() {
             <Text style={styles.name} accessibilityLabel={`Name: ${item.name}`}>
               {item.name}
             </Text>
-            <Text style={styles.message} accessibilityLabel={`Last message: ${item.message}`}>
+            <Text style={[styles.message, item.pinned && { color: 'white' }]} 
+              accessibilityLabel={`Last message: ${item.message}`}>
               {item.message}
             </Text>
             <Text style={styles.date} accessibilityLabel={`Date: ${new Date(item.date).toLocaleDateString()}`}>
@@ -195,11 +183,16 @@ export default function MessagesScreen() {
             </Text>
           </View>
           <TouchableOpacity
-            onPress={() => openModal(item)}
-            accessibilityLabel={`More options for chat with ${item.name}`}
+            onPress={() => togglePin(item.id)}
+            style={styles.pinIcon}
+            accessibilityLabel={`Toggle pin for ${item.name}`}
             accessibilityRole="button"
           >
-            <MaterialIcons name="more-vert" size={24} color="#fff" />
+            <MaterialIcons
+              name="push-pin"
+              size={22}
+              color={item.pinned ? '#ad5ff5' : '#ccc'}
+            />
           </TouchableOpacity>
         </View>
       </TouchableOpacity>
@@ -247,66 +240,6 @@ export default function MessagesScreen() {
             )}
           </View>
         </TouchableWithoutFeedback>
-
-        {modalVisible && (
-          <TouchableWithoutFeedback onPress={closeModal}>
-            <View style={styles.modalOverlay}>
-              <TouchableWithoutFeedback>
-                <View style={styles.modal}>
-                  <TouchableOpacity
-                    onPress={closeModal}
-                    style={styles.closeIcon}
-                    accessibilityLabel="Close thread management modal"
-                    accessibilityRole="button"
-                  >
-                    <MaterialIcons name="close" size={24} color="black" />
-                  </TouchableOpacity>
-                  <Text style={styles.modalTitle}>Manage Thread</Text>
-                  {selectedThread && (
-                    <>
-                      <Text style={styles.modalThreadName}>{selectedThread.name}</Text>
-                      <TextInput
-                        style={styles.modalInput}
-                        value={renameInput}
-                        onChangeText={setRenameInput}
-                        placeholder="New name"
-                        accessibilityLabel="Rename thread"
-                        accessibilityRole="search"
-                      />
-                      <View style={styles.modalActions}>
-                        <TouchableOpacity
-                          onPress={handleRename}
-                          accessibilityLabel="Save thread name"
-                          accessibilityRole="button"
-                        >
-                          <Text style={[styles.modalButton, styles.bold]}>Save</Text>
-                        </TouchableOpacity>
-                      </View>
-                      <View style={styles.modalActions}>
-                        <TouchableOpacity
-                          onPress={handleTogglePin}
-                          accessibilityLabel={`${selectedThread.pinned ? 'Unpin' : 'Pin'} this thread`}
-                          accessibilityRole="button"
-                        >
-                          <Text style={styles.modalButton}>
-                            {selectedThread.pinned ? 'Unpin' : 'Pin'}
-                          </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          onPress={handleDelete}
-                          accessibilityLabel="Delete this thread"
-                          accessibilityRole="button"
-                        >
-                          <Text style={[styles.modalButton, { color: 'red' }]}>Delete</Text>
-                        </TouchableOpacity>
-                      </View>
-                    </>
-                  )}
-                </View>
-              </TouchableWithoutFeedback>
-            </View>
-          </TouchableWithoutFeedback>
-        )}
       </KeyboardAvoidingView>
     </>
   );
@@ -315,22 +248,23 @@ export default function MessagesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#25292e',
-    paddingTop: 10,
+    paddingTop: 0,
   },
   messageSearch: {
     marginHorizontal: 12,
     marginBottom: 10,
     padding: 10,
-    backgroundColor: '#3a3f47',
-    color: '#fff',
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    color: 'black',
     borderRadius: 8,
     fontSize: 16,
   },
   searchContainer: {
-    backgroundColor: '#25292e',
     paddingTop: 10,
     paddingHorizontal: 4,
+    backgroundColor: '#25292e',
   },
   item: {
     flexDirection: 'row',
@@ -340,13 +274,13 @@ const styles = StyleSheet.create({
     marginVertical: 0,
   },
   pinned: {
-    backgroundColor: '#ad5ff5',
+    backgroundColor: '#25292e',
   },
   messageAvatar: {
     width: 46,
     height: 46,
     borderRadius: 23,
-    backgroundColor: '#5229ff',
+    backgroundColor: '#ad5ff5',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -365,69 +299,19 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   name: {
-    color: 'white',
+    color: '#ad5ff5',
     fontWeight: 'bold',
     fontSize: 18,
     marginBottom: 2,
   },
   message: {
-    color: '#ccc',
+    color: '#000',
     fontSize: 15,
     marginBottom: 2,
   },
   date: {
-    color: '#ccc',
+    color: '#aaa',
     fontSize: 12,
-  },
-  modalOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modal: {
-    backgroundColor: '#fff',
-    width: '85%',
-    borderRadius: 8,
-    padding: 20,
-  },
-  closeIcon: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    padding: 8,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    textAlign: 'center',
-  },
-  modalThreadName: {
-    fontSize: 16,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  modalInput: {
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    marginBottom: 15,
-  },
-  modalActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 10,
-  },
-  modalButton: {
-    fontSize: 16,
-    color: '#5229ff',
   },
   bold: {
     fontWeight: 'bold',
@@ -443,5 +327,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
     textAlign: 'center',
     paddingHorizontal: 20,
+  },
+  pinIcon: {
+    padding: 6,
+    color: 'black'
   },
 });
