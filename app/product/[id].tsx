@@ -9,6 +9,7 @@ import fallbackImage from '../../assets/images/fallback.png';
 import { getListingById, Listing } from '@/shared/api/listings';
 import { getUser, updateFavoriteListings } from '@/shared/api/users';
 import { getListingImages, ListingImage } from '@/shared/api/images';
+import { getMessagesBetweenUsers } from '@/shared/api/messages';
 import Toast from 'react-native-toast-message';
 
 
@@ -257,11 +258,22 @@ export default function ProductDetail() {
                             <Text style={styles.sellerMeta}>{seller.location}</Text>
                         </View>
                         <TouchableOpacity
-                            onPress={() => router.push(`/messages/new?sellerId=${seller.username}`)}
+                            onPress={() => {
+                                if (!seller) return;
+                                const CURRENT_USER = 'ikeafan'; // Replace with actual auth user if needed
+
+                                try {
+                                const encodedName = encodeURIComponent(seller.full_name);
+                                router.push(`/messages/${seller.username}?name=${encodedName}`);
+                                } catch (err) {
+                                console.error('Failed to navigate to messages:', err);
+                                Toast.show({ type: 'error', text1: 'Unable to open chat' });
+                                }
+                            }}
                             accessibilityLabel="Message seller"
                             accessibilityRole="button"
                             style={styles.chatButton}
-                        >
+                            >
                             <Ionicons name="chatbox-ellipses" size={28} color="#ad5ff5" />
                         </TouchableOpacity>
                     </View>
