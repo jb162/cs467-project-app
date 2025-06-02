@@ -22,6 +22,20 @@ export async function getTags(): Promise<Tag[]> {
   }
 }
 
+export async function getTagsForListing(listingId: number): Promise<Tag[]> {
+  try {
+    const res = await fetch(`${BASE_URL}/Listings/${listingId}/Tags`);
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || "Failed to fetch tags for listing");
+    }
+    return await res.json();
+  } catch (error) {
+    console.error("getTagsForListing error:", error);
+    throw error;
+  }
+}
+
 export async function createTag(name: string): Promise<Tag> {
   const body = JSON.stringify({ name });
 
