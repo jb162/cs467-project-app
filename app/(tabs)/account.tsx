@@ -7,6 +7,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useEditAccount } from '../shared/EditAccountContext';
+import * as ImagePicker from 'expo-image-picker';
 
 // Placeholder testing functionality
 const seller = users[0];
@@ -34,17 +35,37 @@ export default function AccountScreen() {
     const sellerListingCount = products.filter(
       product => product.seller === seller.username).length;
 
+
+    const [image, setImage] = useState<string | null>(null);
+
+    const pickImage = async () => {
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+
+      if (!result.canceled) {
+        setImage(result.assets[0].uri);
+        setFieldValue('image', result.assets[0].uri);
+      }
+
+    };
+
     return (
       <View style={styles.container}>
         <View style={styles.header}>
             <Text style={styles.headerTitle}>Settings</Text>
-            <Image
-              alt=""
-              source={{ uri: seller.image }}
-              style={styles.image}
-              defaultSource={fallbackImage}
-              accessibilityLabel={`Image of ${seller.name}`}
-            />
+            <TouchableOpacity onPress={pickImage}>
+              <Image
+                alt=""
+                source={ image ? {uri: image } : { uri: seller.image }}
+                style={styles.image}
+                defaultSource={fallbackImage}
+                accessibilityLabel={`Image of ${seller.name}`}
+              />
+            </TouchableOpacity>
         </View>
 
         <View style={styles.accountSummary}>
