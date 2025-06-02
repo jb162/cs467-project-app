@@ -33,6 +33,13 @@ export default function MessageThreadScreen() {
     fetchMessages();
   }, [receiver]);
 
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    if (scrollViewRef.current) {
+      scrollViewRef.current.scrollToEnd({ animated: true });
+    }
+  }, [messages]);
+
   const fetchMessages = async () => {
     try {
       const backendMessages = await getMessagesBetweenUsers(CURRENT_USER, String(receiver));
@@ -80,7 +87,13 @@ export default function MessageThreadScreen() {
 
   return (
     <View style={styles.container} accessibilityRole="summary" accessibilityLabel={`Message thread with ${name ?? 'user'}`}>
-      <ScrollView style={styles.messagesContainer} accessibilityRole="list" accessible>
+      <ScrollView
+        ref={scrollViewRef}
+        style={styles.messagesContainer}
+        accessibilityRole="list"
+        accessible
+        onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+      >
         {messages.length === 0 ? (
           <Text style={styles.noMessagesText} accessibilityRole="alert">
             No messages to display
