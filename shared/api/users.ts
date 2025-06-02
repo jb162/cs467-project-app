@@ -13,6 +13,7 @@ export interface CreateUserPayload {
 export interface User {
   username: string;
   email: string;
+  password: string;
   full_name?: string;
   user_location?: string;
   favorite_listings?: number[]; 
