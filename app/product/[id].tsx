@@ -10,6 +10,7 @@ import { getListingById, Listing } from '@/shared/api/listings';
 import { getUser, updateFavoriteListings } from '@/shared/api/users';
 import { getListingImages, ListingImage, fetchUserProfileImage } from '@/shared/api/images';
 import { getMessagesBetweenUsers } from '@/shared/api/messages';
+import { getTags, getTagsForListing, Tag } from '@/shared/api/tags';
 import Toast from 'react-native-toast-message';
 
 
@@ -28,6 +29,8 @@ export default function ProductDetail() {
     const [imageIndex, setImageIndex] = useState(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [allTags, setAllTags] = useState<Tag[]>([]);
+    const [productTags, setProductTags] = useState<Tag[]>([]);
 
      const handleShare = async () => {
         try {
@@ -86,6 +89,8 @@ export default function ProductDetail() {
             setLoading(true);
             const fetchedProduct = await getListingById(id);
             setProduct(fetchedProduct);
+            const fetchedTags = await getTagsForListing(Number(id));
+            setProductTags(fetchedTags);
 
             if (fetchedProduct.seller) {
                 const fetchedSeller = await getUser(fetchedProduct.seller);
@@ -235,12 +240,20 @@ export default function ProductDetail() {
             <Text style={styles.text}>{product.description}</Text>
 
             <Text style={styles.label}>Details</Text>
-            {/* Commenting out, Category not in DB. Can update to Tags.
             <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Category:</Text>
-                <Text style={styles.detailText}>{product.category}</Text>
+                <Text style={styles.detailLabel}>Tags:</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                    {productTags.length > 0 ? (
+                        productTags.map((tag) => (
+                        <View key={tag.tag_id} style={styles.tagBadge}>
+                            <Text style={styles.tagText}>{tag.name}</Text>
+                        </View>
+                        ))
+                    ) : (
+                        <Text style={styles.detailText}>No tags</Text>
+                    )}
+                    </View>
             </View>
-            */}
             <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Condition:</Text>
                 <Text style={styles.detailText}>{product.item_condition}</Text>
@@ -503,5 +516,17 @@ const styles = StyleSheet.create({
         marginLeft: 20,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    tagBadge: {
+        backgroundColor: '#ad5ff5',
+        borderRadius: 12,
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        marginRight: 6,
+        marginBottom: 6,
+    },
+    tagText: {
+        color: 'white',
+        fontSize: 14,
     },
 });
