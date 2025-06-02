@@ -16,7 +16,7 @@ export interface UserProfileImageResponse {
 
 export async function fetchUserProfileImage(username: string): Promise<UserProfileImageResponse> {
   try {
-    const response = await fetch(`${BASE_URL}/users/${encodeURIComponent(username)}/profile-image`);
+    const response = await fetch(`${BASE_URL}/Users/${encodeURIComponent(username)}/profile-image`);
     if (!response.ok) {
       throw new Error(`Error fetching profile image: ${response.statusText}`);
     }
