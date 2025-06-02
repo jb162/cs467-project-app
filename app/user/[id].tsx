@@ -7,6 +7,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { getUser, User } from '../../shared/api/users';
 import { getListings, Listing } from '../../shared/api/listings';
 import { getMessagesBetweenUsers } from '../../shared/api/messages';
+import { fetchUserProfileImage } from '../../shared/api/images';
 import { getListingImages } from '../../shared/api/images';
 
 const CURRENT_USER = 'ikeafan'; // Update this later with API
@@ -18,6 +19,7 @@ export default function SellerProfile() {
   const sellerUsername = id as string;
 
   const [seller, setSeller] = useState<User | null>(null);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
   const [listings, setListings] = useState<Listing[]>([]);
   const [listingImages, setListingImages] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
@@ -50,6 +52,15 @@ export default function SellerProfile() {
         const filtered = allListings.listings.filter((l) => l.seller === sellerUsername);
         setListings(filtered);
 
+        if (fetchedSeller) {
+          try {
+            const { url } = await fetchUserProfileImage(fetchedSeller.username);
+            setProfileImage(url);
+          } catch (error) {
+            console.warn('Could not load profile image for user:', fetchedSeller.username);
+          }
+        }
+
         const imageMap: Record<number, string> = {};
         await Promise.all(
           filtered.map(async (listing) => {
@@ -75,12 +86,14 @@ export default function SellerProfile() {
     fetchData();
   }, [sellerUsername]);
 
-  const handleMessagePress = async () => {
+  const handleMessagePress = () => {
+    if (!seller || !seller.full_name) return;
+
     try {
-      await getMessagesBetweenUsers(CURRENT_USER, sellerUsername);
-      router.push(`/messages/${sellerUsername}`);
+      const encodedName = encodeURIComponent(seller.full_name);
+      router.push(`/messages/${seller.username}?name=${encodedName}`);
     } catch (error) {
-      console.error('Error checking or creating message thread:', error);
+      console.error('Error navigating to message screen:', error);
     }
   };
 
@@ -103,15 +116,14 @@ export default function SellerProfile() {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.profileHeader}>
-        {/* Seller images will need to be added to the image or user API 
         <Image
-          source={{ uri: seller.image || 'https://via.placeholder.com/120' }}
+          source={{ uri: profileImage ?? 'https://via.placeholder.com/120' }}
           style={styles.image}
-          accessibilityLabel={`Image of ${seller.username}`}
+          accessibilityLabel={`Image of ${seller.full_name}`}
           accessibilityRole="image"
-        />*/}
+        />
         <View style={styles.profileInfo}>
-          <Text style={styles.name}>{seller.username}</Text>
+          <Text style={styles.name}>{seller.full_name}</Text>
           <Text style={styles.text}>{seller.email}</Text>
           <Text style={styles.joinedDate}>
             Joined:{' '}
@@ -134,7 +146,7 @@ export default function SellerProfile() {
         <Text style={styles.messageButtonText}>Send Message</Text>
       </TouchableOpacity>
 
-      <Text style={styles.label}>{seller.username}'s Listings</Text>
+      <Text style={styles.label}>{seller.full_name}'s Listings</Text>
 
       <FlatList
         contentContainerStyle={styles.productsList}
@@ -256,7 +268,8 @@ const styles = StyleSheet.create({
     },
     productPrice: {
         fontSize: 14,
-        color: '#1e88e5',
+        fontWeight: '500',
+        color: '#ad5ff5',
         marginBottom: 8,
         marginLeft: 8,
     },

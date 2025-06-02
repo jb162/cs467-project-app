@@ -19,6 +19,7 @@ export default function MessageThreadScreen() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const inputRef = useRef<TextInput>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   useEffect(() => {
     if (name) {
@@ -31,6 +32,13 @@ export default function MessageThreadScreen() {
 
     fetchMessages();
   }, [receiver]);
+
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    if (scrollViewRef.current) {
+      scrollViewRef.current.scrollToEnd({ animated: true });
+    }
+  }, [messages]);
 
   const fetchMessages = async () => {
     try {
@@ -79,7 +87,13 @@ export default function MessageThreadScreen() {
 
   return (
     <View style={styles.container} accessibilityRole="summary" accessibilityLabel={`Message thread with ${name ?? 'user'}`}>
-      <ScrollView style={styles.messagesContainer} accessibilityRole="list" accessible>
+      <ScrollView
+        ref={scrollViewRef}
+        style={styles.messagesContainer}
+        accessibilityRole="list"
+        accessible
+        onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+      >
         {messages.length === 0 ? (
           <Text style={styles.noMessagesText} accessibilityRole="alert">
             No messages to display
@@ -144,7 +158,6 @@ export default function MessageThreadScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#25292e',
   },
   messagesContainer: {
     flex: 1,
@@ -172,7 +185,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   timestamp: {
-    color: '#bbb',
+    color: '#aaa',
     fontSize: 12,
     marginTop: 4,
   },
@@ -186,7 +199,7 @@ const styles = StyleSheet.create({
   },
   senderName: {
     fontSize: 14,
-    color: '#aaa',
+    color: '#000',
     marginBottom: 4,
     textAlign: 'left',
   },

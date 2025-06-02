@@ -8,7 +8,8 @@ import * as Linking from 'expo-linking';
 import fallbackImage from '../../assets/images/fallback.png';
 import { getListingById, Listing } from '@/shared/api/listings';
 import { getUser, updateFavoriteListings } from '@/shared/api/users';
-import { getListingImages, ListingImage } from '@/shared/api/images';
+import { getListingImages, ListingImage, fetchUserProfileImage } from '@/shared/api/images';
+import { getMessagesBetweenUsers } from '@/shared/api/messages';
 import Toast from 'react-native-toast-message';
 
 
@@ -22,6 +23,7 @@ export default function ProductDetail() {
     const [product, setProduct] = useState<Listing | null>(null);
     const [seller, setSeller] = useState<any | null>(null);
     const [listingImages, setListingImages] = useState<ListingImage[]>([]);
+    const [sellerProfileImageUrl, setSellerProfileImageUrl] = useState<string | null>(null);
     const [fullscreen, setFullscreen] = useState(false);
     const [imageIndex, setImageIndex] = useState(0);
     const [loading, setLoading] = useState(true);
@@ -88,6 +90,10 @@ export default function ProductDetail() {
             if (fetchedProduct.seller) {
                 const fetchedSeller = await getUser(fetchedProduct.seller);
                 setSeller(fetchedSeller);
+
+                // Fetch seller profile image
+                const profileImageResponse = await fetchUserProfileImage(fetchedSeller.username);
+                setSellerProfileImageUrl(profileImageResponse.url);
             }
 
             // Fetch listing images separately
@@ -248,7 +254,11 @@ export default function ProductDetail() {
             {seller ? (
                 <TouchableOpacity onPress={handleSellerInfo} accessibilityLabel="View seller info" accessibilityRole="button">
                     <View style={styles.sellerInfoRow}>
-                        <Image source={{ uri: seller.image }} style={styles.sellerImage} defaultSource={fallbackImage} accessibilityLabel={`Image of ${seller.name}`} />
+                        <Image
+                            source={sellerProfileImageUrl ? { uri: sellerProfileImageUrl } : fallbackImage}
+                            style={styles.sellerImage}
+                            accessibilityLabel={`Image of ${seller.full_name}`}
+                        />
                         <View style={styles.sellerDetailsContainer}>
                             <Text style={styles.sellerName}>{seller.full_name}</Text>
                             <Text style={styles.sellerMeta}>
@@ -257,7 +267,18 @@ export default function ProductDetail() {
                             <Text style={styles.sellerMeta}>{seller.location}</Text>
                         </View>
                         <TouchableOpacity
-                            onPress={() => router.push(`/messages/new?sellerId=${seller.username}`)}
+                            onPress={() => {
+                                if (!seller) return;
+                                const CURRENT_USER = 'ikeafan'; // Replace with actual auth user if needed
+
+                                try {
+                                    const encodedName = encodeURIComponent(seller.full_name);
+                                    router.push(`/messages/${seller.username}?name=${encodedName}`);
+                                } catch (err) {
+                                    console.error('Failed to navigate to messages:', err);
+                                    Toast.show({ type: 'error', text1: 'Unable to open chat' });
+                                }
+                            }}
                             accessibilityLabel="Message seller"
                             accessibilityRole="button"
                             style={styles.chatButton}
@@ -371,7 +392,7 @@ const styles = StyleSheet.create({
         marginHorizontal: 4,
     },
     activeDot: {
-        backgroundColor: '#1e88e5',
+        backgroundColor: '#ad5ff5',
     },
     image: {
         width: screenWidth * 0.85,
@@ -422,7 +443,7 @@ const styles = StyleSheet.create({
     price: {
         fontSize: 22,
         fontWeight: '500',
-        color: '#1e88e5',
+        color: '#ad5ff5',
         marginBottom: 12,
     },
     label: {
