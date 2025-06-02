@@ -10,6 +10,24 @@ export interface ListingImage {
   created_datetime: string | null;
 }
 
+export interface UserProfileImageResponse {
+  url: string | null;
+}
+
+export async function fetchUserProfileImage(username: string): Promise<UserProfileImageResponse> {
+  try {
+    const response = await fetch(`${BASE_URL}/users/${encodeURIComponent(username)}/profile-image`);
+    if (!response.ok) {
+      throw new Error(`Error fetching profile image: ${response.statusText}`);
+    }
+    const data: UserProfileImageResponse = await response.json();
+    return data;
+  } catch (error) {
+    console.error(error);
+    return { url: null };
+  }
+}
+
 export async function getListingImages(
   listingId: number
 ): Promise<ListingImage[]> {
