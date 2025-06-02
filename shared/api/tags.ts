@@ -3,7 +3,8 @@ const BASE_URL =
   "https://backend-api-729553473022.us-central1.run.app/v1";
 
 export interface Tag {
-  id: number;
+  tag_id: number;
+  listing_id: number;
   name: string;
   created_datetime: string;
 }
@@ -22,16 +23,17 @@ export async function getTags(): Promise<Tag[]> {
   }
 }
 
+// Get tags for a specific listing
 export async function getTagsForListing(listingId: number): Promise<Tag[]> {
   try {
-    const res = await fetch(`${BASE_URL}/Listings/${listingId}/Tags`);
+    const res = await fetch(`${BASE_URL}/Tags/${listingId}`);
     if (!res.ok) {
       const err = await res.json();
-      throw new Error(err.error || "Failed to fetch tags for listing");
+      throw new Error(err.error || `Failed to fetch tags for listing ${listingId}`);
     }
     return await res.json();
   } catch (error) {
-    console.error("getTagsForListing error:", error);
+    console.error(`getTagsForListing error (listingId: ${listingId}):`, error);
     throw error;
   }
 }
