@@ -52,6 +52,14 @@ export async function getListings(): Promise<ListingsResponse> {
   return res.json();
 }
 
+export async function getListingsByUser(username: string): Promise<Listing[]> {
+  const response = await fetch(`${BASE_URL}/users/${encodeURIComponent(username)}/listings`);
+  if (!response.ok) {
+    throw new Error("Failed to fetch user listings");
+  }
+  return await response.json();
+}
+
 // GET /Listings/:id
 export async function getListingById(listingId: string): Promise<Listing> {
   const options: RequestInit = {
