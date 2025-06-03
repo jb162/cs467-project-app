@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useRouter, withLayoutContext } from 'expo-router';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useRouter, withLayoutContext, useFocusEffect } from 'expo-router';
 import {
   View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet, Image,
   TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform, 
@@ -34,90 +34,93 @@ export default function MessagesScreen() {
   const [messageSearch, setMessageSearch] = useState('');
   const router = useRouter();
 
-  useEffect(() => {
-    async function fetchMessagesAndUsers() {
-      try {
-        const response = await fetch(
-          `https://backend-api-729553473022.us-central1.run.app/v1/Messages?user=${CURRENT_USER}`
-        );
-        const { messages } = await response.json();
-        const data: BackendMessage[] = messages;
+  const fetchMessagesAndUsers = useCallback(async () => {
+    try {
+      const response = await fetch(
+        `https://backend-api-729553473022.us-central1.run.app/v1/Messages?user=${CURRENT_USER}`
+      );
+      const { messages } = await response.json();
+      const data: BackendMessage[] = messages;
 
-        const userMessages = data.filter(
-          (msg) => msg.sender === CURRENT_USER || msg.receiver === CURRENT_USER
-        );
+      const userMessages = data.filter(
+        (msg) => msg.sender === CURRENT_USER || msg.receiver === CURRENT_USER
+      );
 
-        const otherUsernamesSet = new Set<string>();
-        userMessages.forEach((msg) => {
-          if (msg.sender !== CURRENT_USER) otherUsernamesSet.add(msg.sender);
-          if (msg.receiver !== CURRENT_USER) otherUsernamesSet.add(msg.receiver);
-        });
-        const otherUsernames = Array.from(otherUsernamesSet);
+      const otherUsernamesSet = new Set<string>();
+      userMessages.forEach((msg) => {
+        if (msg.sender !== CURRENT_USER) otherUsernamesSet.add(msg.sender);
+        if (msg.receiver !== CURRENT_USER) otherUsernamesSet.add(msg.receiver);
+      });
+      const otherUsernames = Array.from(otherUsernamesSet);
 
-        // Fetch user data
-        const userPromises = otherUsernames.map((username) =>
-          getUser(username).catch(() => null)
-        );
-        const usersData = await Promise.all(userPromises);
+      // Fetch user data
+      const userPromises = otherUsernames.map((username) =>
+        getUser(username).catch(() => null)
+      );
+      const usersData = await Promise.all(userPromises);
 
-        const usersMap = new Map<string, User>();
-        usersData.forEach((user) => {
-          if (user) usersMap.set(user.username, user);
-        });
+      const usersMap = new Map<string, User>();
+      usersData.forEach((user) => {
+        if (user) usersMap.set(user.username, user);
+      });
 
-        // Build threads without images first
-        const groupedThreads: { [key: string]: Thread } = {};
-        userMessages.forEach((msg) => {
-          const key = [msg.sender, msg.receiver].sort().join('-');
-          const otherUser = msg.sender === CURRENT_USER ? msg.receiver : msg.sender;
-          const otherUserDetails = usersMap.get(otherUser);
-          const userName = otherUserDetails?.full_name || otherUserDetails?.username || otherUser;
+      // Build threads without images first
+      const groupedThreads: { [key: string]: Thread } = {};
+      userMessages.forEach((msg) => {
+        const key = [msg.sender, msg.receiver].sort().join('-');
+        const otherUser = msg.sender === CURRENT_USER ? msg.receiver : msg.sender;
+        const otherUserDetails = usersMap.get(otherUser);
+        const userName = otherUserDetails?.full_name || otherUserDetails?.username || otherUser;
 
-          if (
-            !groupedThreads[key] ||
-            new Date(msg.sent_datetime) > new Date(groupedThreads[key].date)
-          ) {
-            groupedThreads[key] = {
-              id: key,
-              username: otherUser,
-              name: userName,
-              message: msg.message_body,
-              date: msg.sent_datetime,
-              pinned: false,
-              image: undefined, // placeholder, will set below
-            };
-          }
-        });
+        if (
+          !groupedThreads[key] ||
+          new Date(msg.sent_datetime) > new Date(groupedThreads[key].date)
+        ) {
+          groupedThreads[key] = {
+            id: key,
+            username: otherUser,
+            name: userName,
+            message: msg.message_body,
+            date: msg.sent_datetime,
+            pinned: false,
+            image: undefined,
+          };
+        }
+      });
 
-        // Fetch images for each thread user in parallel
-        const threadUsers = Object.values(groupedThreads).map((thread) => thread.username);
-        // Fetch images for each thread user in parallel
-        const imagePromises = threadUsers.map(async (username) => {
-          try {
-            const imageData = await fetchUserProfileImage(username);
-            console.log(`Fetched image URL for ${username}:`, imageData.url);
-            return imageData;
-          } catch {
-            console.log(`Failed to fetch image for ${username}`);
-            return { url: undefined };
-          }
-        });
-        const images = await Promise.all(imagePromises);
+      // Fetch images for each thread user in parallel
+      const threadUsers = Object.values(groupedThreads).map((thread) => thread.username);
+      const imagePromises = threadUsers.map(async (username) => {
+        try {
+          const imageData = await fetchUserProfileImage(username);
+          return imageData;
+        } catch {
+          return { url: undefined };
+        }
+      });
+      const images = await Promise.all(imagePromises);
 
-        // Assign fetched images to threads
-        Object.values(groupedThreads).forEach((thread, idx) => {
-          const imageUrl = images[idx].url;
-          thread.image = imageUrl || undefined;
-        });
+      Object.values(groupedThreads).forEach((thread, idx) => {
+        thread.image = images[idx].url || undefined;
+      });
 
-        setThreads(Object.values(groupedThreads));
-      } catch (error) {
-        console.error('Failed to fetch messages or users:', error);
-      }
+      setThreads(Object.values(groupedThreads));
+    } catch (error) {
+      console.error('Failed to fetch messages or users:', error);
     }
-
-    fetchMessagesAndUsers();
   }, []);
+
+  // Initial fetch when component mounts
+  useEffect(() => {
+    fetchMessagesAndUsers();
+  }, [fetchMessagesAndUsers]);
+
+  // Refetch when screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      fetchMessagesAndUsers();
+    }, [fetchMessagesAndUsers])
+  );
 
   const filteredThreads = threads
     .filter(
