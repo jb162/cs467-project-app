@@ -68,6 +68,30 @@ export async function getUser(username: string): Promise<User> {
   }
 }
 
+export async function updateUser(username: string, updates: Partial<User>): Promise<{ message: string }> {
+  const requestOptions: RequestInit = {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(updates),
+  };
+
+  try {
+    const res = await fetch(`${BASE_URL}/Users/${username}`, requestOptions);
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || "Failed to update user");
+    }
+
+    return await res.json();
+  } catch (error) {
+    console.error("updateUser error:", error);
+    throw error;
+  }
+}
+
 export async function updateFavoriteListings(
   username: string,
   favoriteListings: string[]
