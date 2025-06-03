@@ -491,6 +491,10 @@ const styles = StyleSheet.create({
         padding: 12,
         borderRadius: 8,
         marginTop: 8,
+        shadowColor: 'rgba(0, 0, 0, 0.5)',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.2,
+        shadowRadius: 1.41,
     },
     sellerImage: {
         width: 64,

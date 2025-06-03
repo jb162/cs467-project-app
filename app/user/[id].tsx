@@ -115,25 +115,27 @@ export default function SellerProfile() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.profileHeader}>
-        <Image
-          source={{ uri: profileImage ?? 'https://via.placeholder.com/120' }}
-          style={styles.image}
-          accessibilityLabel={`Image of ${seller.full_name}`}
-          accessibilityRole="image"
-        />
-        <View style={styles.profileInfo}>
-          <Text style={styles.name}>{seller.full_name}</Text>
-          <Text style={styles.text}>{seller.email}</Text>
-          <Text style={styles.joinedDate}>
-            Joined:{' '}
-            {seller.created_datetime
-              ? new Date(seller.created_datetime).toLocaleString('default', {
-                  month: 'short',
-                  year: 'numeric',
-                })
-              : 'N/A'}
-          </Text>
+      <View style={styles.profileCard}>
+        <View style={styles.profileHeader}>
+          <Image
+            source={{ uri: profileImage ?? 'https://via.placeholder.com/120' }}
+            style={styles.image}
+            accessibilityLabel={`Image of ${seller.full_name}`}
+            accessibilityRole="image"
+          />
+          <View style={styles.profileInfo}>
+            <Text style={styles.name}>{seller.full_name}</Text>
+            <Text style={styles.text}>{seller.email}</Text>
+            <Text style={styles.joinedDate}>
+              Joined:{' '}
+              {seller.created_datetime
+                ? new Date(seller.created_datetime).toLocaleString('default', {
+                    month: 'short',
+                    year: 'numeric',
+                  })
+                : 'N/A'}
+            </Text>
+          </View>
         </View>
       </View>
 
@@ -185,13 +187,25 @@ const styles = StyleSheet.create({
     profileHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 16,
     },
     image: {
         width: 120,
         height: 120,
-        borderRadius: 10,
+        borderRadius: 60,
         backgroundColor: '#ccc',
+    },
+    profileCard: {
+      backgroundColor: 'white',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: 12,
+      padding: 16,
+      marginBottom: 16,
+      shadowColor: 'rgba(0, 0, 0, 0.5)',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.2,
+      shadowRadius: 1.41,
     },
     profileInfo: {
         marginLeft: 16,
@@ -225,6 +239,10 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         width: '100%',
         marginBottom: 12,
+        shadowColor: 'rgba(0, 0, 0, 0.5)',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.2,
+        shadowRadius: 1.41,
     },
     messageButtonText: {
         color: 'white',
@@ -247,10 +265,10 @@ const styles = StyleSheet.create({
         backgroundColor: 'white',
         borderRadius: 8,
         overflow: 'hidden',
-        shadowColor: '#000',
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        shadowOffset: { width: 0, height: 4 },
+        shadowColor: 'rgba(0, 0, 0, 0.5)',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.2,
+        shadowRadius: 1.41,
     },
     productImage: {
         width: '100%',

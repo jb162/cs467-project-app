@@ -172,10 +172,10 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     btn: {
-        backgroundColor: 'purple',
+        backgroundColor: '#ad5ff5',
         borderRadius: 8,
         borderWidth: 1,
-        borderColor: 'purple',
+        borderColor: '#ad5ff5',
         alignItems: 'center',
         paddingVertical: 10,
         paddingHorizontal: 20,
