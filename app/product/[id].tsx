@@ -121,7 +121,7 @@ export default function ProductDetail() {
             title: '',
             headerLeft: () => (
                 <TouchableOpacity
-                    onPress={() => router.push('/')}
+                    onPress={() => router.back()}
                     style={styles.backButton}
                     accessibilityLabel="Go back to home"
                     accessibilityRole="button"
