@@ -14,7 +14,7 @@ import { fetchUserProfileImage } from '../../shared/api/images';
 import { getListingImages } from '../../shared/api/images';
 
 // Replace with actual user from auth context/session
-const CURRENT_USERNAME = 'justin123';
+const CURRENT_USERNAME = 'ikeafan';
 
 export default function AccountScreen() {
     const router = useRouter();

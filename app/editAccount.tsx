@@ -1,6 +1,6 @@
 import { StyleSheet, SafeAreaView, View, Text, TextInput, TouchableOpacity } from "react-native";
 import { useEffect, useState } from 'react';
-import { useRouter } from "expo-router";
+import { useRouter, Stack } from "expo-router";
 import { useEditAccount } from "./shared/EditAccountContext";
 
 export default function EditAccount() {
@@ -31,6 +31,7 @@ export default function EditAccount() {
 
     return (
         <SafeAreaView>
+          <Stack.Screen options={{ title: '' }} />
           <View style={styles.container}>
             <View style={styles.header}>
               <Text style={styles.title}>Edit {label}</Text>
