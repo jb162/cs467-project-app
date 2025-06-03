@@ -80,6 +80,6 @@ const styles = StyleSheet.create({
   cardPrice: {
     fontSize: 14,
     fontWeight: '500',
-    color: 'black',
+    color: '#ad5ff5',
   }
 })
