@@ -3,7 +3,10 @@ import { StyleSheet, ScrollView, View, Image, Text, TextInput, TouchableOpacity 
 import fallbackImage from '../../assets/images/fallback.png';
 import * as ImagePicker from 'expo-image-picker';
 import { Picker } from '@react-native-picker/picker';
+import { createListing } from '../../shared/api/listings';
+import { uploadImage } from '../../shared/api/images';
 
+const CURRENT_USER = 'ikeafan'; // Update to current user later
 
 export default function PostScreen() {
     const [form, setForm] = useState({
@@ -34,9 +37,23 @@ export default function PostScreen() {
         setForm(prev => ({ ...prev, [key]: value }));
     };
 
-    const handleCreateListing = () => {
-        /* Placeholder functionality */
-        console.log("Form data:", form);
+    const handleCreateListing = async () => {
+
+        // call uploadImage to handle item image uploading
+
+        try {
+            const newListing = await createListing ({
+                title: form.title,
+                description: form.description,
+                price: parseFloat(form.price),
+                seller: CURRENT_USER,
+                location: form.location,
+                item_condition: form.condition,
+            });
+
+        } catch (error) {
+            console.error("Error creating listing:", error);
+        }
     };
 
     return (
@@ -94,7 +111,7 @@ export default function PostScreen() {
                         <Text style={styles.inputLabel}>Condition</Text>
                         <Picker
                             selectedValue={form.condition}
-                            style={styles.inputControl}
+                            style={styles.inputControlDropdown}
                             onValueChange={(value) => handleChange('condition', value)}
                         >
                             <Picker.Item label="Select condition"/>
@@ -166,6 +183,13 @@ const styles = StyleSheet.create({
         height: 44,
         backgroundColor: '#fff',
         paddingHorizontal: 16,
+    },
+    inputControlDropdown: {
+        height: 44,
+        backgroundColor: '#fff',
+        paddingHorizontal: 16,
+        borderWidth: 1,
+        borderColor: '#fff',
     },
     formAction: {
         marginTop: 4,
